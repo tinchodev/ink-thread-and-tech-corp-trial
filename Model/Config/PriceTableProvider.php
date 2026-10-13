@@ -19,7 +19,7 @@ use Psr\Log\LoggerInterface;
  */
 class PriceTableProvider implements PriceTableProviderInterface
 {
-    private const XML_PATH_PREFIX = 'inkthread_decoration/pricing/';
+    private const string XML_PATH_PREFIX = 'inkthread_decoration/pricing/';
 
     /**
      * @var array<string, array<string, list<array{min_qty: int, price: float}>>>
@@ -28,14 +28,14 @@ class PriceTableProvider implements PriceTableProviderInterface
 
     /**
      * @param ScopeConfigInterface $scopeConfig
-     * @param Json $serializer
-     * @param PriceTableParser $parser
+     * @param Json $json
+     * @param PriceTableParser $priceTableParser
      * @param LoggerInterface $logger
      */
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
-        private readonly Json $serializer,
-        private readonly PriceTableParser $parser,
+        private readonly Json $json,
+        private readonly PriceTableParser $priceTableParser,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -43,6 +43,7 @@ class PriceTableProvider implements PriceTableProviderInterface
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function getTiers(string $method, string $location): array
     {
         if (!isset($this->tables[$method])) {
@@ -66,8 +67,8 @@ class PriceTableProvider implements PriceTableProviderInterface
         }
 
         try {
-            $rows = $this->serializer->unserialize($value);
-            return is_array($rows) ? $this->parser->parse($rows) : [];
+            $rows = $this->json->unserialize($value);
+            return is_array($rows) ? $this->priceTableParser->parse($rows) : [];
         } catch (InvalidPriceTableException | \InvalidArgumentException $e) {
             $this->logger->error(
                 'InkThread_DecorationPricing: invalid price table for "' . $method . '": ' . $e->getMessage()

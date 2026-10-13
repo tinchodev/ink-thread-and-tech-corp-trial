@@ -44,6 +44,7 @@ class ArtworkValidator
         if ($uploadError === UPLOAD_ERR_INI_SIZE || $uploadError === UPLOAD_ERR_FORM_SIZE || $size > self::MAX_SIZE) {
             throw new LocalizedException(__('Artwork files can be at most %1 MB.', self::MAX_SIZE / 1024 / 1024));
         }
+
         if ($uploadError !== UPLOAD_ERR_OK || $size <= 0) {
             throw new LocalizedException(__('The artwork file could not be uploaded. Please try again.'));
         }

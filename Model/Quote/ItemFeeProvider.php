@@ -14,6 +14,7 @@ use InkThread\DecorationPricing\Model\SelectionFactory;
 use InkThread\DecorationPricing\Model\TierLine;
 use InkThread\DecorationPricing\Model\TierQuantityResolver;
 use Magento\Catalog\Model\Product\Configuration\Item\ItemInterface;
+use Magento\Catalog\Model\Product\Configuration\Item\Option\OptionInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item\AbstractItem;
@@ -27,21 +28,24 @@ use Magento\Quote\Model\Quote\Item\AbstractItem;
 class ItemFeeProvider
 {
     public const OPTION_CODE = 'inkthread_decoration';
+
     public const ERROR_ORIGIN = 'inkthread_decoration';
+
     public const ERROR_CODE_NOT_PRICED = 1;
-    private const FEE_DATA_KEY = 'inkthread_decoration_fee';
+
+    private const string FEE_DATA_KEY = 'inkthread_decoration_fee';
 
     /**
      * @param SelectionFactory $selectionFactory
      * @param TierQuantityResolver $tierQuantityResolver
      * @param FeeCalculator $feeCalculator
-     * @param Json $serializer
+     * @param Json $json
      */
     public function __construct(
         private readonly SelectionFactory $selectionFactory,
         private readonly TierQuantityResolver $tierQuantityResolver,
         private readonly FeeCalculator $feeCalculator,
-        private readonly Json $serializer
+        private readonly Json $json
     ) {
     }
 
@@ -53,7 +57,7 @@ class ItemFeeProvider
      */
     public function getSelection(ItemInterface $item): ?Selection
     {
-        /** @var \Magento\Catalog\Model\Product\Configuration\Item\Option\OptionInterface|null $option */
+        /** @var OptionInterface|null $option */
         $option = $item->getOptionByCode(self::OPTION_CODE);
 
         return $option !== null ? $this->decode((string)$option->getValue()) : null;
@@ -68,12 +72,12 @@ class ItemFeeProvider
     public function decode(string $value): ?Selection
     {
         try {
-            $selection = $this->selectionFactory->createFromStored($this->serializer->unserialize($value));
-        } catch (\InvalidArgumentException $e) {
+            $selection = $this->selectionFactory->createFromStored($this->json->unserialize($value));
+        } catch (\InvalidArgumentException) {
             return null;
         }
 
-        return $selection !== null && $selection->isDecorated() ? $selection : null;
+        return $selection instanceof Selection && $selection->isDecorated() ? $selection : null;
     }
 
     /**
@@ -84,7 +88,7 @@ class ItemFeeProvider
      */
     public function getFee(AbstractItem $item): ?FeeResult
     {
-        if ($this->getSelection($item) === null) {
+        if (!$this->getSelection($item) instanceof Selection) {
             return null;
         }
 
@@ -94,6 +98,7 @@ class ItemFeeProvider
             if (!$quote instanceof Quote) {
                 return null;
             }
+
             $this->calculateForQuote($quote);
             $fee = $item->getData(self::FEE_DATA_KEY);
         }
@@ -123,6 +128,7 @@ class ItemFeeProvider
                 (float)$item->getQty()
             );
         }
+
         $tierQuantities = $this->tierQuantityResolver->resolve($lines);
 
         $quote->removeErrorInfosByParams('error', [
@@ -135,9 +141,13 @@ class ItemFeeProvider
             $item->unsetData(self::FEE_DATA_KEY);
 
             $selection = $line->getSelection();
-            if ($selection === null || $line->getQty() <= 0) {
+            if (!$selection instanceof Selection) {
                 continue;
             }
+            if ($line->getQty() <= 0) {
+                continue;
+            }
+
             try {
                 $item->setData(
                     self::FEE_DATA_KEY,

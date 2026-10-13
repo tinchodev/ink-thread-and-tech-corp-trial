@@ -18,11 +18,12 @@ class PriceTable extends AbstractFieldArray
     /**
      * @var LocationColumn|null
      */
-    private ?LocationColumn $locationRenderer = null;
+    private ?LocationColumn $locationColumn = null;
 
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function _prepareToRender()
     {
         $this->addColumn('location', [
@@ -44,18 +45,20 @@ class PriceTable extends AbstractFieldArray
     /**
      * Pre-select the stored location in each row.
      *
-     * @param DataObject $row
+     * @param DataObject $dataObject
      * @return void
      * @throws LocalizedException
      */
-    protected function _prepareArrayRow(DataObject $row): void
+    #[\Override]
+    protected function _prepareArrayRow(DataObject $dataObject): void
     {
         $options = [];
-        $location = $row->getData('location');
+        $location = $dataObject->getData('location');
         if ($location !== null) {
             $options['option_' . $this->getLocationRenderer()->calcOptionHash($location)] = 'selected="selected"';
         }
-        $row->setData('option_extra_attrs', $options);
+
+        $dataObject->setData('option_extra_attrs', $options);
     }
 
     /**
@@ -66,16 +69,16 @@ class PriceTable extends AbstractFieldArray
      */
     private function getLocationRenderer(): LocationColumn
     {
-        if ($this->locationRenderer === null) {
+        if ($this->locationColumn === null) {
             /** @var LocationColumn $renderer */
             $renderer = $this->getLayout()->createBlock(
                 LocationColumn::class,
                 '',
                 ['data' => ['is_render_to_js_template' => true]]
             );
-            $this->locationRenderer = $renderer;
+            $this->locationColumn = $renderer;
         }
 
-        return $this->locationRenderer;
+        return $this->locationColumn;
     }
 }

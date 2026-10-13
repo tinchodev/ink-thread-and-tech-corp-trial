@@ -15,17 +15,11 @@ use Magento\Framework\Phrase;
 class InvalidPriceTableException extends LocalizedException
 {
     /**
-     * @var Phrase[]
-     */
-    private array $errors;
-
-    /**
      * @param Phrase[] $errors
      */
-    public function __construct(array $errors)
+    public function __construct(private readonly array $errors)
     {
-        $this->errors = $errors;
-        parent::__construct(__(implode(' ', array_map('strval', $errors))));
+        parent::__construct(__(implode(' ', array_map('strval', $this->errors))));
     }
 
     /**

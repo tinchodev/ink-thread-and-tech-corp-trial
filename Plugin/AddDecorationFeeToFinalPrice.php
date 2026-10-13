@@ -9,6 +9,7 @@ namespace InkThread\DecorationPricing\Plugin;
 use InkThread\DecorationPricing\Exception\PricingNotConfiguredException;
 use InkThread\DecorationPricing\Model\FeeCalculator;
 use InkThread\DecorationPricing\Model\Quote\ItemFeeProvider;
+use InkThread\DecorationPricing\Model\Selection;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type\Price;
 use Magento\Quote\Model\Quote\Item\AbstractItem;
@@ -34,14 +35,14 @@ class AddDecorationFeeToFinalPrice
     /**
      * Add the unit fee to the final price.
      *
-     * @param Price $subject
+     * @param Price $price
      * @param float|int|string $result
      * @param float|int|string|null $qty
      * @param Product $product
      * @return float
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterGetFinalPrice(Price $subject, $result, $qty, $product): float
+    public function afterGetFinalPrice(Price $price, $result, $qty, $product): float
     {
         $finalPrice = (float)$result;
         $option = $product->getCustomOption(ItemFeeProvider::OPTION_CODE);
@@ -73,12 +74,13 @@ class AddDecorationFeeToFinalPrice
         }
 
         $selection = $this->itemFeeProvider->decode((string)$option->getValue());
-        if ($selection === null || (float)$qty <= 0) {
+        if (!$selection instanceof Selection || (float)$qty <= 0) {
             return 0.0;
         }
+
         try {
             return $this->feeCalculator->calculate($selection, (float)$qty)->getUnitFee();
-        } catch (PricingNotConfiguredException $e) {
+        } catch (PricingNotConfiguredException) {
             return 0.0;
         }
     }

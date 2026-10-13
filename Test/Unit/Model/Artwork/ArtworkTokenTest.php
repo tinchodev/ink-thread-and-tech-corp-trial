@@ -23,13 +23,14 @@ class ArtworkTokenTest extends TestCase
     /**
      * @var ArtworkToken
      */
-    private ArtworkToken $token;
+    private ArtworkToken $artworkToken;
 
     /**
      * @var Encryptor
      */
     private Encryptor $encryptor;
 
+    #[\Override]
     protected function setUp(): void
     {
         $deploymentConfig = $this->createMock(DeploymentConfig::class);
@@ -37,33 +38,33 @@ class ArtworkTokenTest extends TestCase
             [Encryptor::PARAM_CRYPT_KEY, null, str_repeat('k', 32)],
         ]);
         $this->encryptor = new Encryptor($this->createMock(Random::class), $deploymentConfig);
-        $this->token = new ArtworkToken($this->encryptor, new Json(), new ArtworkFileMapper());
+        $this->artworkToken = new ArtworkToken($this->encryptor, new Json(), new ArtworkFileMapper());
     }
 
     public function testRoundTrip(): void
     {
-        $file = new ArtworkFile('inkthread_decoration/artwork/abc.png', 'logo.png', 123, 'image/png');
+        $artworkFile = new ArtworkFile('inkthread_decoration/artwork/abc.png', 'logo.png', 123, 'image/png');
 
-        $decoded = $this->token->decode($this->token->encode($file));
+        $decoded = $this->artworkToken->decode($this->artworkToken->encode($artworkFile));
 
-        $this->assertEquals($file, $decoded);
+        $this->assertEquals($artworkFile, $decoded);
     }
 
     public function testTamperedTokenIsRejected(): void
     {
-        $token = $this->token->encode(
+        $token = $this->artworkToken->encode(
             new ArtworkFile('inkthread_decoration/artwork/abc.png', 'logo.png', 1, 'image/png')
         );
-        $tampered = substr($token, 0, -4) . (substr($token, -4) === 'AAAA' ? 'BBBB' : 'AAAA');
+        $tampered = substr((string) $token, 0, -4) . (str_ends_with((string) $token, 'AAAA') ? 'BBBB' : 'AAAA');
 
-        $this->assertNull($this->token->decode($tampered));
+        $this->assertNull($this->artworkToken->decode($tampered));
     }
 
     public function testValidlyEncryptedForeignPathIsRejected(): void
     {
         $forged = $this->encryptor->encrypt('{"path":"../app/etc/env.php","name":"env.php"}');
 
-        $this->assertNull($this->token->decode($forged));
+        $this->assertNull($this->artworkToken->decode($forged));
     }
 
     /**
@@ -71,7 +72,7 @@ class ArtworkTokenTest extends TestCase
      */
     public function testGarbageIsRejected(mixed $token): void
     {
-        $this->assertNull($this->token->decode($token));
+        $this->assertNull($this->artworkToken->decode($token));
     }
 
     /**

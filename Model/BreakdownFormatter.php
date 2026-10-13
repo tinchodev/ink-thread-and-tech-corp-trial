@@ -33,16 +33,16 @@ class BreakdownFormatter
      * Breakdown lines. Without a fee (e.g. wishlist, or not priceable) only the selection is shown.
      *
      * @param Selection $selection
-     * @param FeeResult|null $fee
+     * @param FeeResult|null $feeResult
      * @param mixed $scope store used for currency formatting
      * @return list<array{label: string, value: string}>
      */
-    public function format(Selection $selection, ?FeeResult $fee = null, mixed $scope = null): array
+    public function format(Selection $selection, ?FeeResult $feeResult = null, mixed $scope = null): array
     {
         $method = $this->decorationMethod->getLabel($selection->getMethod());
 
-        if ($fee === null) {
-            $locations = array_map([$this->printLocation, 'getLabel'], $selection->getLocations());
+        if (!$feeResult instanceof FeeResult) {
+            $locations = array_map($this->printLocation->getLabel(...), $selection->getLocations());
             $lines = [['label' => (string)__('Decoration'), 'value' => $method . ': ' . implode(', ', $locations)]];
             foreach ($selection->getLocations() as $location) {
                 $details = $this->locationDetails($selection, $location);
@@ -53,20 +53,22 @@ class BreakdownFormatter
             }
         } else {
             $lines = [['label' => (string)__('Decoration'), 'value' => $method]];
-            foreach ($fee->getLocationPrices() as $location => $price) {
+            foreach ($feeResult->getLocationPrices() as $location => $price) {
                 $parts = $this->locationDetails($selection, $location);
                 array_unshift($parts, (string)__('%1 / unit', $this->money($price, $scope)));
                 $lines[] = ['label' => $this->printLocation->getLabel($location), 'value' => implode(' · ', $parts)];
             }
+
             $value = (string)__(
                 '%1 / unit × %2 = %3',
-                $this->money($fee->getUnitFee(), $scope),
-                $this->qty($fee->getLineQty()),
-                $this->money($fee->getLineFee(), $scope)
+                $this->money($feeResult->getUnitFee(), $scope),
+                $this->qty($feeResult->getLineQty()),
+                $this->money($feeResult->getLineFee(), $scope)
             );
-            if ($fee->isPooled()) {
-                $value .= ' ' . __('(tier for %1 matching units)', $this->qty($fee->getTierQty()));
+            if ($feeResult->isPooled()) {
+                $value .= ' ' . __('(tier for %1 matching units)', $this->qty($feeResult->getTierQty()));
             }
+
             $lines[] = ['label' => (string)__('Decoration fee'), 'value' => $value];
         }
 
@@ -90,6 +92,7 @@ class BreakdownFormatter
         if ($selection->getLocationText($location) !== '') {
             $details[] = (string)__('Text: "%1"', $selection->getLocationText($location));
         }
+
         $artwork = $selection->getArtwork()[$location] ?? null;
         if ($artwork !== null) {
             $details[] = (string)__('Artwork: %1', $artwork->getName());

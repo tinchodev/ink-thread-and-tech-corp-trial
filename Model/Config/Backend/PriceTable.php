@@ -26,34 +26,34 @@ class PriceTable extends ArraySerialized
     /**
      * @param Context $context
      * @param Registry $registry
-     * @param ScopeConfigInterface $config
+     * @param ScopeConfigInterface $scopeConfig
      * @param TypeListInterface $cacheTypeList
      * @param PriceTableParser $priceTableParser
      * @param AbstractResource|null $resource
-     * @param AbstractDb|null $resourceCollection
+     * @param AbstractDb|null $db
      * @param array<string,mixed> $data
-     * @param Json|null $serializer
+     * @param Json|null $json
      */
     public function __construct(
         Context $context,
         Registry $registry,
-        ScopeConfigInterface $config,
+        ScopeConfigInterface $scopeConfig,
         TypeListInterface $cacheTypeList,
         private readonly PriceTableParser $priceTableParser,
         ?AbstractResource $resource = null,
-        ?AbstractDb $resourceCollection = null,
+        ?AbstractDb $db = null,
         array $data = [],
-        ?Json $serializer = null
+        ?Json $json = null
     ) {
         parent::__construct(
             $context,
             $registry,
-            $config,
+            $scopeConfig,
             $cacheTypeList,
             $resource,
-            $resourceCollection,
+            $db,
             $data,
-            $serializer
+            $json
         );
     }
 
@@ -63,6 +63,7 @@ class PriceTable extends ArraySerialized
      * @return $this
      * @throws LocalizedException
      */
+    #[\Override]
     public function beforeSave()
     {
         // getValue() is documented as string, but the admin form posts an array of rows.
@@ -89,6 +90,7 @@ class PriceTable extends ArraySerialized
      *
      * @return $this
      */
+    #[\Override]
     public function afterSave()
     {
         if ($this->isValueChanged()) {
@@ -103,6 +105,7 @@ class PriceTable extends ArraySerialized
      *
      * @return $this
      */
+    #[\Override]
     public function afterDelete()
     {
         $this->markActiveQuotesForRecollect();

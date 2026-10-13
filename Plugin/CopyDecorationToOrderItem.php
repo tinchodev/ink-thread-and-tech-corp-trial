@@ -7,10 +7,13 @@ declare(strict_types=1);
 namespace InkThread\DecorationPricing\Plugin;
 
 use InkThread\DecorationPricing\Model\BreakdownFormatter;
+use InkThread\DecorationPricing\Model\FeeResult;
 use InkThread\DecorationPricing\Model\Quote\ItemFeeProvider;
+use InkThread\DecorationPricing\Model\Selection;
 use Magento\Quote\Model\Quote\Item\AbstractItem;
 use Magento\Quote\Model\Quote\Item\ToOrderItem;
 use Magento\Sales\Api\Data\OrderItemInterface;
+use Magento\Sales\Model\Order\Item;
 
 /**
  * Freezes the decoration into the order item's product_options when the order is placed:
@@ -36,7 +39,7 @@ class CopyDecorationToOrderItem
     /**
      * Add the snapshot to the converted order item.
      *
-     * @param ToOrderItem $subject
+     * @param ToOrderItem $toOrderItem
      * @param OrderItemInterface $orderItem
      * @param AbstractItem $item
      * @param array<string,mixed> $data
@@ -44,19 +47,19 @@ class CopyDecorationToOrderItem
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterConvert(
-        ToOrderItem $subject,
+        ToOrderItem $toOrderItem,
         OrderItemInterface $orderItem,
         AbstractItem $item,
         array $data = []
     ): OrderItemInterface {
         $selection = $this->itemFeeProvider->getSelection($item);
-        if ($selection === null || !$orderItem instanceof \Magento\Sales\Model\Order\Item) {
+        if (!$selection instanceof Selection || !$orderItem instanceof Item) {
             return $orderItem;
         }
 
         $fee = $this->itemFeeProvider->getFee($item);
         $options = $orderItem->getProductOptions() ?: [];
-        $options[self::SNAPSHOT_KEY] = $fee ? $fee->toArray() : $selection->toArray();
+        $options[self::SNAPSHOT_KEY] = $fee instanceof FeeResult ? $fee->toArray() : $selection->toArray();
         $options['additional_options'] = array_merge(
             $options['additional_options'] ?? [],
             $this->breakdownFormatter->format($selection, $fee, $item->getStore())

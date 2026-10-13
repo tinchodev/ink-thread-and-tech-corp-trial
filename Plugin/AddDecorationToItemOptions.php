@@ -8,6 +8,7 @@ namespace InkThread\DecorationPricing\Plugin;
 
 use InkThread\DecorationPricing\Model\BreakdownFormatter;
 use InkThread\DecorationPricing\Model\Quote\ItemFeeProvider;
+use InkThread\DecorationPricing\Model\Selection;
 use Magento\Catalog\Helper\Product\Configuration;
 use Magento\Catalog\Model\Product\Configuration\Item\ItemInterface;
 use Magento\Quote\Model\Quote\Item\AbstractItem;
@@ -34,16 +35,16 @@ class AddDecorationToItemOptions
     /**
      * Add breakdown lines after the item's own options.
      *
-     * @param Configuration $subject
+     * @param Configuration $configuration
      * @param array<int,array<string,mixed>> $result
      * @param ItemInterface $item
      * @return array<int,array<string,mixed>>
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterGetCustomOptions(Configuration $subject, array $result, ItemInterface $item): array
+    public function afterGetCustomOptions(Configuration $configuration, array $result, ItemInterface $item): array
     {
         $selection = $this->itemFeeProvider->getSelection($item);
-        if ($selection === null) {
+        if (!$selection instanceof Selection) {
             return $result;
         }
 

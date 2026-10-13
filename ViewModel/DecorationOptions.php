@@ -7,9 +7,11 @@ declare(strict_types=1);
 namespace InkThread\DecorationPricing\ViewModel;
 
 use InkThread\DecorationPricing\Api\PriceTableProviderInterface;
+use InkThread\DecorationPricing\Model\Artwork\ArtworkFile;
 use InkThread\DecorationPricing\Model\Artwork\ArtworkToken;
 use InkThread\DecorationPricing\Model\Artwork\ArtworkValidator;
 use InkThread\DecorationPricing\Model\Artwork\RequestArtworkResolver;
+use InkThread\DecorationPricing\Model\Selection;
 use InkThread\DecorationPricing\Model\SelectionFactory;
 use InkThread\DecorationPricing\Model\SelectionValidator;
 use InkThread\DecorationPricing\Model\Source\DecorationMethod;
@@ -31,7 +33,7 @@ class DecorationOptions implements ArgumentInterface
      * @param PriceTableProviderInterface $priceTableProvider
      * @param SelectionFactory $selectionFactory
      * @param ArtworkToken $artworkToken
-     * @param Json $serializer
+     * @param Json $json
      */
     public function __construct(
         private readonly DecorationMethod $decorationMethod,
@@ -39,7 +41,7 @@ class DecorationOptions implements ArgumentInterface
         private readonly PriceTableProviderInterface $priceTableProvider,
         private readonly SelectionFactory $selectionFactory,
         private readonly ArtworkToken $artworkToken,
-        private readonly Json $serializer
+        private readonly Json $json
     ) {
     }
 
@@ -122,7 +124,10 @@ class DecorationOptions implements ArgumentInterface
      */
     public function getArtworkAccept(): string
     {
-        return implode(',', array_map(static fn ($ext) => '.' . $ext, array_keys(ArtworkValidator::ALLOWED_TYPES)));
+        return implode(
+            ',',
+            array_map(static fn ($ext): string => '.' . $ext, array_keys(ArtworkValidator::ALLOWED_TYPES))
+        );
     }
 
     /**
@@ -138,7 +143,7 @@ class DecorationOptions implements ArgumentInterface
     {
         $data = $product->getPreconfiguredValues()->getData(CaptureDecorationSelection::REQUEST_KEY);
         $selection = $this->selectionFactory->createFromRequestData($data);
-        if ($selection === null) {
+        if (!$selection instanceof Selection) {
             return null;
         }
 
@@ -147,7 +152,7 @@ class DecorationOptions implements ArgumentInterface
         $tokens = is_array($data['artwork_tokens'] ?? null) ? $data['artwork_tokens'] : [];
         foreach ($tokens as $location => $token) {
             $file = $this->artworkToken->decode($token);
-            if ($file !== null && in_array($location, $selection->getLocations(), true)) {
+            if ($file instanceof ArtworkFile && in_array($location, $selection->getLocations(), true)) {
                 $result['artwork'][$location] = ['name' => $file->getName(), 'token' => $token];
             }
         }
@@ -173,7 +178,7 @@ class DecorationOptions implements ArgumentInterface
             }
         }
 
-        return $this->serializer->serialize([
+        return $this->json->serialize([
             'noneMethod' => DecorationMethod::NONE,
             'maxLocations' => SelectionValidator::MAX_LOCATIONS,
             'exclusivePairs' => SelectionValidator::EXCLUSIVE_PAIRS,

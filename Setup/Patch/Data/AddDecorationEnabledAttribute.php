@@ -36,6 +36,7 @@ class AddDecorationEnabledAttribute implements DataPatchInterface, PatchRevertab
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function apply(): self
     {
         $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
@@ -66,6 +67,7 @@ class AddDecorationEnabledAttribute implements DataPatchInterface, PatchRevertab
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function revert(): void
     {
         $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
@@ -75,6 +77,7 @@ class AddDecorationEnabledAttribute implements DataPatchInterface, PatchRevertab
     /**
      * @inheritdoc
      */
+    #[\Override]
     public static function getDependencies(): array
     {
         return [];
@@ -83,6 +86,7 @@ class AddDecorationEnabledAttribute implements DataPatchInterface, PatchRevertab
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function getAliases(): array
     {
         return [];

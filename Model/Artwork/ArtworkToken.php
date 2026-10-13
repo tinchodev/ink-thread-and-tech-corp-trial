@@ -19,12 +19,12 @@ class ArtworkToken
 {
     /**
      * @param EncryptorInterface $encryptor
-     * @param Json $serializer
+     * @param Json $json
      * @param ArtworkFileMapper $artworkFileMapper
      */
     public function __construct(
         private readonly EncryptorInterface $encryptor,
-        private readonly Json $serializer,
+        private readonly Json $json,
         private readonly ArtworkFileMapper $artworkFileMapper
     ) {
     }
@@ -32,12 +32,12 @@ class ArtworkToken
     /**
      * Encode a stored file as a token.
      *
-     * @param ArtworkFile $file
+     * @param ArtworkFile $artworkFile
      * @return string
      */
-    public function encode(ArtworkFile $file): string
+    public function encode(ArtworkFile $artworkFile): string
     {
-        return $this->encryptor->encrypt($this->serializer->serialize($file->toArray()));
+        return $this->encryptor->encrypt($this->json->serialize($artworkFile->toArray()));
     }
 
     /**
@@ -51,10 +51,11 @@ class ArtworkToken
         if (!is_string($token) || $token === '') {
             return null;
         }
+
         try {
             $json = $this->encryptor->decrypt($token);
-            return $json !== '' ? $this->artworkFileMapper->fromArray($this->serializer->unserialize($json)) : null;
-        } catch (\Exception $e) {
+            return $json !== '' ? $this->artworkFileMapper->fromArray($this->json->unserialize($json)) : null;
+        } catch (\Exception) {
             return null;
         }
     }

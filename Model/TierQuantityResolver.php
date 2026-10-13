@@ -31,6 +31,7 @@ class TierQuantityResolver
                 $result[$line->getLineId()] = $line->getQty();
                 continue;
             }
+
             $key = $line->getProductId() . '|' . $selection->getPricingKey();
             $poolTotals[$key] = ($poolTotals[$key] ?? 0.0) + $line->getQty();
             $lineKeys[$line->getLineId()] = $key;

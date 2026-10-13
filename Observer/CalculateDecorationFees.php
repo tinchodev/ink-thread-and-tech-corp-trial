@@ -30,6 +30,7 @@ class CalculateDecorationFees implements ObserverInterface
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function execute(Observer $observer): void
     {
         $quote = $observer->getData('quote');

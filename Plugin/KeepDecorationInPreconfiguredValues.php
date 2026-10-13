@@ -21,13 +21,13 @@ class KeepDecorationInPreconfiguredValues
     /**
      * Copy the decoration from the buy request.
      *
-     * @param Product $subject
+     * @param Product $product
      * @param DataObject $result
      * @param DataObject $buyRequest
      * @return DataObject
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterProcessBuyRequest(Product $subject, DataObject $result, DataObject $buyRequest): DataObject
+    public function afterProcessBuyRequest(Product $product, DataObject $result, DataObject $buyRequest): DataObject
     {
         $decoration = $buyRequest->getData(CaptureDecorationSelection::REQUEST_KEY);
         if (is_array($decoration)) {

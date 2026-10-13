@@ -17,21 +17,22 @@ use PHPUnit\Framework\TestCase;
 
 class FeeCalculatorTest extends TestCase
 {
-    private const DELTA = 0.00001;
+    private const float DELTA = 0.00001;
 
     /**
      * @var FeeCalculator
      */
-    private FeeCalculator $calculator;
+    private FeeCalculator $feeCalculator;
 
+    #[\Override]
     protected function setUp(): void
     {
-        $this->calculator = $this->createCalculator(new ShippedPriceTableProvider());
+        $this->feeCalculator = $this->createCalculator(new ShippedPriceTableProvider());
     }
 
     public function testBriefWorkedExampleEmbroidery(): void
     {
-        $result = $this->calculator->calculate(
+        $result = $this->feeCalculator->calculate(
             new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::LEFT_CHEST, PrintLocation::SLEEVE], ''),
             12
         );
@@ -47,7 +48,7 @@ class FeeCalculatorTest extends TestCase
 
     public function testBriefWorkedExampleScreenPrint(): void
     {
-        $result = $this->calculator->calculate(
+        $result = $this->feeCalculator->calculate(
             new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::FULL_BACK], ''),
             100
         );
@@ -61,7 +62,7 @@ class FeeCalculatorTest extends TestCase
      */
     public function testTierBoundaries(string $method, string $location, float $qty, float $expectedUnitPrice): void
     {
-        $result = $this->calculator->calculate(new Selection($method, [$location], ''), $qty);
+        $result = $this->feeCalculator->calculate(new Selection($method, [$location], ''), $qty);
 
         $this->assertEqualsWithDelta($expectedUnitPrice, $result->getUnitFee(), self::DELTA);
         $this->assertEqualsWithDelta($expectedUnitPrice * $qty, $result->getLineFee(), self::DELTA);
@@ -106,7 +107,7 @@ class FeeCalculatorTest extends TestCase
 
     public function testThreeLocationsAreSummed(): void
     {
-        $result = $this->calculator->calculate(
+        $result = $this->feeCalculator->calculate(
             new Selection(
                 DecorationMethod::EMBROIDERY,
                 [PrintLocation::LEFT_CHEST, PrintLocation::SLEEVE, PrintLocation::FULL_BACK],
@@ -121,7 +122,7 @@ class FeeCalculatorTest extends TestCase
 
     public function testLeftAndRightChestAreChargedAsTwoLocations(): void
     {
-        $result = $this->calculator->calculate(
+        $result = $this->feeCalculator->calculate(
             new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::LEFT_CHEST, PrintLocation::RIGHT_CHEST], ''),
             24
         );
@@ -137,7 +138,7 @@ class FeeCalculatorTest extends TestCase
             ''
         );
 
-        $result = $this->calculator->calculate($selection, 6, 12);
+        $result = $this->feeCalculator->calculate($selection, 6, 12);
 
         $this->assertEqualsWithDelta(6.00, $result->getUnitFee(), self::DELTA);
         $this->assertEqualsWithDelta(36.00, $result->getLineFee(), self::DELTA);
@@ -154,7 +155,7 @@ class FeeCalculatorTest extends TestCase
             ''
         );
 
-        $result = $this->calculator->calculate($selection, 6, 11);
+        $result = $this->feeCalculator->calculate($selection, 6, 11);
 
         $this->assertEqualsWithDelta(4.00 + 3.50, $result->getUnitFee(), self::DELTA);
         $this->assertEqualsWithDelta(45.00, $result->getLineFee(), self::DELTA);
@@ -162,7 +163,7 @@ class FeeCalculatorTest extends TestCase
 
     public function testUnpooledLineIsNotFlaggedAsPooled(): void
     {
-        $result = $this->calculator->calculate(
+        $result = $this->feeCalculator->calculate(
             new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''),
             12
         );
@@ -172,7 +173,7 @@ class FeeCalculatorTest extends TestCase
 
     public function testNoDecorationHasNoFee(): void
     {
-        $result = $this->calculator->calculate(new Selection(DecorationMethod::NONE, [], ''), 50);
+        $result = $this->feeCalculator->calculate(new Selection(DecorationMethod::NONE, [], ''), 50);
 
         $this->assertSame([], $result->getLocationPrices());
         $this->assertSame(0.0, $result->getUnitFee());
@@ -181,17 +182,17 @@ class FeeCalculatorTest extends TestCase
 
     public function testUnconfiguredLocationFailsClosed(): void
     {
-        $calculator = $this->createCalculator($this->createProvider([]));
+        $feeCalculator = $this->createCalculator($this->createProvider([]));
 
         $this->expectException(PricingNotConfiguredException::class);
         $this->expectExceptionMessage('Sleeve is not available for Embroidery.');
 
-        $calculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 12);
+        $feeCalculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 12);
     }
 
     public function testQuantityBelowLowestTierFailsClosed(): void
     {
-        $calculator = $this->createCalculator($this->createProvider([
+        $feeCalculator = $this->createCalculator($this->createProvider([
             DecorationMethod::EMBROIDERY => [
                 PrintLocation::SLEEVE => [['min_qty' => 12, 'price' => 2.75]],
             ],
@@ -200,22 +201,22 @@ class FeeCalculatorTest extends TestCase
         $this->expectException(PricingNotConfiguredException::class);
         $this->expectExceptionMessage('Embroidery on Sleeve requires a minimum quantity of 12.');
 
-        $calculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 11);
+        $feeCalculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 11);
     }
 
     public function testAssertOfferedPassesWhenEveryLocationHasATable(): void
     {
-        $this->calculator->assertOffered(
+        $this->feeCalculator->assertOffered(
             new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::LEFT_CHEST, PrintLocation::FULL_BACK], '')
         );
-        $this->calculator->assertOffered(new Selection(DecorationMethod::NONE, [], ''));
+        $this->feeCalculator->assertOffered(new Selection(DecorationMethod::NONE, [], ''));
 
         $this->addToAssertionCount(1);
     }
 
     public function testAssertOfferedRejectsLocationWithoutTable(): void
     {
-        $calculator = $this->createCalculator($this->createProvider([
+        $feeCalculator = $this->createCalculator($this->createProvider([
             DecorationMethod::SCREEN_PRINT => [
                 PrintLocation::SLEEVE => [['min_qty' => 1, 'price' => 1.75]],
             ],
@@ -224,7 +225,7 @@ class FeeCalculatorTest extends TestCase
         $this->expectException(PricingNotConfiguredException::class);
         $this->expectExceptionMessage('Full back is not available for Screen print.');
 
-        $calculator->assertOffered(
+        $feeCalculator->assertOffered(
             new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::SLEEVE, PrintLocation::FULL_BACK], '')
         );
     }
@@ -233,12 +234,12 @@ class FeeCalculatorTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $this->calculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 0);
+        $this->feeCalculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 0);
     }
 
     public function testToArrayContainsSnapshotData(): void
     {
-        $result = $this->calculator->calculate(
+        $result = $this->feeCalculator->calculate(
             new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], 'Logo v2'),
             5,
             12
@@ -262,12 +263,12 @@ class FeeCalculatorTest extends TestCase
     }
 
     /**
-     * @param PriceTableProviderInterface $provider
+     * @param PriceTableProviderInterface $priceTableProvider
      * @return FeeCalculator
      */
-    private function createCalculator(PriceTableProviderInterface $provider): FeeCalculator
+    private function createCalculator(PriceTableProviderInterface $priceTableProvider): FeeCalculator
     {
-        return new FeeCalculator($provider, new DecorationMethod(), new PrintLocation());
+        return new FeeCalculator($priceTableProvider, new DecorationMethod(), new PrintLocation());
     }
 
     /**
@@ -276,7 +277,7 @@ class FeeCalculatorTest extends TestCase
      */
     private function createProvider(array $tables): PriceTableProviderInterface
     {
-        return new class ($tables) implements PriceTableProviderInterface {
+        return new class($tables) implements PriceTableProviderInterface {
             /**
              * @param array<string, array<string, list<array{min_qty: int, price: float}>>> $tables
              */

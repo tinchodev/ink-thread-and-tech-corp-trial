@@ -45,14 +45,16 @@ class Download extends Action implements HttpGetActionInterface
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function execute()
     {
         $location = (string)$this->getRequest()->getParam('location');
         try {
             $item = $this->orderItemRepository->get((int)$this->getRequest()->getParam('item_id'));
-        } catch (NoSuchEntityException $e) {
+        } catch (NoSuchEntityException) {
             return $this->fail((string)__('This order item no longer exists.'));
         }
+
         if (!$item instanceof OrderItem) {
             return $this->fail((string)__('This order item no longer exists.'));
         }
@@ -82,7 +84,7 @@ class Download extends Action implements HttpGetActionInterface
         $this->messageManager->addErrorMessage($message);
         $redirect = $this->resultRedirectFactory->create();
 
-        return $orderId
+        return $orderId !== 0
             ? $redirect->setPath('sales/order/view', ['order_id' => $orderId])
             : $redirect->setPath('sales/order/index');
     }

@@ -43,6 +43,7 @@ class FeeCalculator
         if ($lineQty <= 0 || $tierQty <= 0) {
             throw new \InvalidArgumentException('Decoration fee quantities must be greater than zero.');
         }
+
         if (!$selection->isDecorated()) {
             return new FeeResult($selection, [], 0.0, $lineQty, $tierQty, 0.0);
         }
@@ -51,6 +52,7 @@ class FeeCalculator
         foreach ($selection->getLocations() as $location) {
             $locationPrices[$location] = $this->getUnitPrice($selection->getMethod(), $location, $tierQty);
         }
+
         $unitFee = round(array_sum($locationPrices), 4);
 
         return new FeeResult(
@@ -77,6 +79,7 @@ class FeeCalculator
         if (!$selection->isDecorated()) {
             return;
         }
+
         foreach ($selection->getLocations() as $location) {
             if (!$this->priceTableProvider->getTiers($selection->getMethod(), $location)) {
                 throw $this->notOfferedException($selection->getMethod(), $location);
@@ -96,7 +99,7 @@ class FeeCalculator
     private function getUnitPrice(string $method, string $location, float $qty): float
     {
         $tiers = $this->priceTableProvider->getTiers($method, $location);
-        if (!$tiers) {
+        if ($tiers === []) {
             throw $this->notOfferedException($method, $location);
         }
 
@@ -106,6 +109,7 @@ class FeeCalculator
                 $price = $tier['price'];
             }
         }
+
         if ($price === null) {
             throw new PricingNotConfiguredException(__(
                 '%1 on %2 requires a minimum quantity of %3.',

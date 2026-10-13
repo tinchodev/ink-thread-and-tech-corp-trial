@@ -1,0 +1,12 @@
+# Static analysis for the module, run from the Magento root:
+#   vendor/bin/phpstan analyse -c app/code/InkThread/DecorationPricing/phpstan.neon.dist
+# Needs `bin/magento setup:di:compile` first: generated classes (factories, interceptors) live in generated/code,
+# which app/autoload.php does not cover.
+parameters:
+    level: 6
+    paths:
+        - .
+    bootstrapFiles:
+        - ../../../../app/autoload.php
+    scanDirectories:
+        - ../../../../generated/code

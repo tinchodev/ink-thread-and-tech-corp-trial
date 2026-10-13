@@ -8,6 +8,7 @@ namespace InkThread\DecorationPricing\Model\Artwork;
 
 use InkThread\DecorationPricing\Model\Selection;
 use InkThread\DecorationPricing\Observer\CaptureDecorationSelection;
+use Laminas\Stdlib\ParametersInterface;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\DataObject;
@@ -28,7 +29,7 @@ class RequestArtworkResolver
     /**
      * @var \WeakMap<DataObject, array<string,ArtworkFile>>
      */
-    private \WeakMap $resolved;
+    private \WeakMap $weakMap;
 
     /**
      * @param RequestInterface $request
@@ -40,25 +41,26 @@ class RequestArtworkResolver
         private readonly ArtworkStorage $artworkStorage,
         private readonly ArtworkToken $artworkToken
     ) {
-        $this->resolved = new \WeakMap();
+        $this->weakMap = new \WeakMap();
     }
 
     /**
      * Resolve artwork for the selection's locations.
      *
-     * @param DataObject $buyRequest
+     * @param DataObject $dataObject
      * @param Selection $selection
      * @return array<string,ArtworkFile>
      * @throws LocalizedException
      */
-    public function resolve(DataObject $buyRequest, Selection $selection): array
+    public function resolve(DataObject $dataObject, Selection $selection): array
     {
-        if (isset($this->resolved[$buyRequest])) {
-            return $this->resolved[$buyRequest];
+        if (isset($this->weakMap[$dataObject])) {
+            return $this->weakMap[$dataObject];
         }
 
-        $data = $buyRequest->getData(CaptureDecorationSelection::REQUEST_KEY);
+        $data = $dataObject->getData(CaptureDecorationSelection::REQUEST_KEY);
         $data = is_array($data) ? $data : [];
+
         $tokens = is_array($data['artwork_tokens'] ?? null) ? $data['artwork_tokens'] : [];
         $remove = is_array($data['artwork_remove'] ?? null) ? $data['artwork_remove'] : [];
 
@@ -69,20 +71,22 @@ class RequestArtworkResolver
                 $artwork[$location] = $this->artworkStorage->saveUpload(self::FILE_FIELD_PREFIX . $location, $upload);
                 continue;
             }
+
             if (!empty($remove[$location])) {
                 continue;
             }
+
             $file = $this->artworkToken->decode($tokens[$location] ?? null);
-            if ($file !== null && $this->artworkStorage->exists($file)) {
+            if ($file instanceof ArtworkFile && $this->artworkStorage->exists($file)) {
                 $artwork[$location] = $file;
             }
         }
 
-        $data['artwork_tokens'] = array_map([$this->artworkToken, 'encode'], $artwork);
+        $data['artwork_tokens'] = array_map($this->artworkToken->encode(...), $artwork);
         unset($data['artwork_remove']);
-        $buyRequest->setData(CaptureDecorationSelection::REQUEST_KEY, $data);
+        $dataObject->setData(CaptureDecorationSelection::REQUEST_KEY, $data);
 
-        return $this->resolved[$buyRequest] = $artwork;
+        return $this->weakMap[$dataObject] = $artwork;
     }
 
     /**
@@ -96,10 +100,12 @@ class RequestArtworkResolver
         if (!$this->request instanceof Http) {
             return null;
         }
+
         $file = $this->request->getFiles(self::FILE_FIELD_PREFIX . $location);
-        if ($file instanceof \Laminas\Stdlib\ParametersInterface) {
+        if ($file instanceof ParametersInterface) {
             $file = $file->toArray();
         }
+
         if (!is_array($file) || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
             return null;
         }

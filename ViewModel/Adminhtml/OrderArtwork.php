@@ -63,17 +63,17 @@ class OrderArtwork implements ArgumentInterface
     /**
      * Artwork in an order item's decoration snapshot.
      *
-     * @param OrderItem $item
+     * @param OrderItem $orderItem
      * @return array<string,ArtworkFile>
      */
-    public function getArtwork(OrderItem $item): array
+    public function getArtwork(OrderItem $orderItem): array
     {
-        $snapshot = $item->getProductOptions()[CopyDecorationToOrderItem::SNAPSHOT_KEY] ?? null;
+        $snapshot = $orderItem->getProductOptions()[CopyDecorationToOrderItem::SNAPSHOT_KEY] ?? null;
         $stored = is_array($snapshot) && is_array($snapshot['artwork'] ?? null) ? $snapshot['artwork'] : [];
         $artwork = [];
         foreach ($stored as $loc => $data) {
             $file = $this->artworkFileMapper->fromArray($data);
-            if ($file !== null) {
+            if ($file instanceof ArtworkFile) {
                 $artwork[(string)$loc] = $file;
             }
         }

@@ -30,13 +30,14 @@ class PriceTableProviderTest extends TestCase
     /**
      * @var PriceTableProvider
      */
-    private PriceTableProvider $provider;
+    private PriceTableProvider $priceTableProvider;
 
+    #[\Override]
     protected function setUp(): void
     {
         $this->scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->provider = new PriceTableProvider(
+        $this->priceTableProvider = new PriceTableProvider(
             $this->scopeConfig,
             new Json(),
             new PriceTableParser(new PrintLocation()),
@@ -56,9 +57,9 @@ class PriceTableProviderTest extends TestCase
 
         $this->assertSame(
             [['min_qty' => 1, 'price' => 3.5], ['min_qty' => 12, 'price' => 2.75]],
-            $this->provider->getTiers('embroidery', 'sleeve')
+            $this->priceTableProvider->getTiers('embroidery', 'sleeve')
         );
-        $this->assertSame([], $this->provider->getTiers('embroidery', 'full_back'));
+        $this->assertSame([], $this->priceTableProvider->getTiers('embroidery', 'full_back'));
     }
 
     public function testMissingConfigGivesNoTiers(): void
@@ -66,7 +67,7 @@ class PriceTableProviderTest extends TestCase
         $this->scopeConfig->method('getValue')->willReturn(null);
         $this->logger->expects($this->never())->method('error');
 
-        $this->assertSame([], $this->provider->getTiers('embroidery', 'sleeve'));
+        $this->assertSame([], $this->priceTableProvider->getTiers('embroidery', 'sleeve'));
     }
 
     /**
@@ -77,7 +78,7 @@ class PriceTableProviderTest extends TestCase
         $this->scopeConfig->method('getValue')->willReturn($value);
         $this->logger->expects($this->once())->method('error');
 
-        $this->assertSame([], $this->provider->getTiers('embroidery', 'sleeve'));
+        $this->assertSame([], $this->priceTableProvider->getTiers('embroidery', 'sleeve'));
     }
 
     /**

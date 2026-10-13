@@ -53,7 +53,8 @@ class LocationColumn extends Select
     /**
      * @inheritdoc
      */
-    public function _toHtml(): string
+    #[\Override]
+    protected function _toHtml(): string
     {
         if (!$this->getOptions()) {
             $this->setOptions($this->printLocation->toOptionArray());

@@ -16,16 +16,17 @@ class PriceTableParserTest extends TestCase
     /**
      * @var PriceTableParser
      */
-    private PriceTableParser $parser;
+    private PriceTableParser $priceTableParser;
 
+    #[\Override]
     protected function setUp(): void
     {
-        $this->parser = new PriceTableParser(new PrintLocation());
+        $this->priceTableParser = new PriceTableParser(new PrintLocation());
     }
 
     public function testRowsAreCastAndSortedByMinQty(): void
     {
-        $result = $this->parser->parse([
+        $result = $this->priceTableParser->parse([
             '_c' => ['location' => 'sleeve', 'min_qty' => '48', 'price' => '2.00'],
             '_a' => ['location' => 'sleeve', 'min_qty' => '1', 'price' => '3.50'],
             '_b' => ['location' => 'sleeve', 'min_qty' => ' 12 ', 'price' => '2.75'],
@@ -47,7 +48,7 @@ class PriceTableParserTest extends TestCase
 
     public function testEmptyAndNonArrayRowsAreSkipped(): void
     {
-        $result = $this->parser->parse([
+        $result = $this->priceTableParser->parse([
             '__empty' => '',
             '_a' => ['location' => '', 'min_qty' => '', 'price' => ''],
             '_b' => ['location' => 'sleeve', 'min_qty' => '1', 'price' => '1'],
@@ -58,13 +59,13 @@ class PriceTableParserTest extends TestCase
 
     public function testEmptyInputGivesEmptyTable(): void
     {
-        $this->assertSame([], $this->parser->parse([]));
+        $this->assertSame([], $this->priceTableParser->parse([]));
     }
 
     public function testAllInvalidRowsAreReportedWithRowNumbers(): void
     {
         try {
-            $this->parser->parse([
+            $this->priceTableParser->parse([
                 ['location' => 'pocket', 'min_qty' => '1', 'price' => '1'],
                 ['location' => 'sleeve', 'min_qty' => '0', 'price' => '1'],
                 ['location' => 'sleeve', 'min_qty' => '1.5', 'price' => '1'],
@@ -74,7 +75,7 @@ class PriceTableParserTest extends TestCase
                 ['location' => 'sleeve', 'min_qty' => '3', 'price' => '2'],
             ]);
             $this->fail('Expected InvalidPriceTableException');
-        } catch (InvalidPriceTableException $e) {
+        } catch (InvalidPriceTableException $invalidPriceTableException) {
             $this->assertSame(
                 [
                     'Row 1: choose a valid print location.',
@@ -84,7 +85,7 @@ class PriceTableParserTest extends TestCase
                     'Row 5: unit price must be a number of 0 or more.',
                     'Row 7: Sleeve already has a price for minimum quantity 3.',
                 ],
-                array_map('strval', $e->getErrors())
+                array_map('strval', $invalidPriceTableException->getErrors())
             );
         }
     }

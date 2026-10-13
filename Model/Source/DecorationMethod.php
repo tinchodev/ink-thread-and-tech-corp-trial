@@ -14,7 +14,9 @@ use Magento\Framework\Data\OptionSourceInterface;
 class DecorationMethod implements OptionSourceInterface
 {
     public const NONE = 'none';
+
     public const EMBROIDERY = 'embroidery';
+
     public const SCREEN_PRINT = 'screen_print';
 
     /**
@@ -68,6 +70,7 @@ class DecorationMethod implements OptionSourceInterface
      *
      * @return list<array{value: string, label: string}>
      */
+    #[\Override]
     public function toOptionArray(): array
     {
         $options = [];

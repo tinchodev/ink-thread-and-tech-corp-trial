@@ -10,6 +10,7 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\File\UploaderFactory;
 use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Math\Random;
 
 /**
@@ -60,9 +61,10 @@ class ArtworkStorage
             $uploader->setFilesDispersion(false);
             $uploader->setAllowCreateFolders(true);
             $result = $uploader->save($this->getDirectory()->getAbsolutePath(self::BASE_PATH), $fileName);
-        } catch (\Exception $e) {
-            throw new LocalizedException(__('The artwork file could not be saved. Please try again.'), $e);
+        } catch (\Exception $exception) {
+            throw new LocalizedException(__('The artwork file could not be saved. Please try again.'), $exception);
         }
+
         if (!is_array($result) || empty($result['file'])) {
             throw new LocalizedException(__('The artwork file could not be saved. Please try again.'));
         }
@@ -78,20 +80,20 @@ class ArtworkStorage
     /**
      * Whether a stored file still exists.
      *
-     * @param ArtworkFile $file
+     * @param ArtworkFile $artworkFile
      * @return bool
      */
-    public function exists(ArtworkFile $file): bool
+    public function exists(ArtworkFile $artworkFile): bool
     {
-        return $this->getDirectory()->isFile($file->getPath());
+        return $this->getDirectory()->isFile($artworkFile->getPath());
     }
 
     /**
      * Writable var/ directory.
      *
-     * @return \Magento\Framework\Filesystem\Directory\WriteInterface
+     * @return WriteInterface
      */
-    private function getDirectory(): \Magento\Framework\Filesystem\Directory\WriteInterface
+    private function getDirectory(): WriteInterface
     {
         return $this->filesystem->getDirectoryWrite(DirectoryList::VAR_DIR);
     }

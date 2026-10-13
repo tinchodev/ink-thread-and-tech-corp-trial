@@ -22,6 +22,7 @@ class ArtworkFileMapper
         if (!is_array($data) || !is_string($data['path'] ?? null) || !is_string($data['name'] ?? null)) {
             return null;
         }
+
         $path = $data['path'];
         if (!str_starts_with($path, ArtworkStorage::BASE_PATH . '/') || str_contains($path, '..')) {
             return null;

@@ -28,15 +28,18 @@ class ShippedPriceTableProvider implements PriceTableProviderInterface
     {
         // phpcs:ignore Magento2.Functions.DiscouragedFunction
         $config = simplexml_load_file(dirname(__DIR__, 3) . '/etc/config.xml');
-        $parser = new PriceTableParser(new PrintLocation());
+        $priceTableParser = new PriceTableParser(new PrintLocation());
         foreach ($config->default->inkthread_decoration->pricing->children() as $method => $value) {
-            $this->tables[$method] = $parser->parse(json_decode((string)$value, true, 512, JSON_THROW_ON_ERROR));
+            $this->tables[$method] = $priceTableParser->parse(
+                json_decode((string)$value, true, 512, JSON_THROW_ON_ERROR)
+            );
         }
     }
 
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function getTiers(string $method, string $location): array
     {
         return $this->tables[$method][$location] ?? [];

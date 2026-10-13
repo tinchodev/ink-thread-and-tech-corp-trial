@@ -145,7 +145,10 @@ class Selection
             'locations' => $this->locations,
             'note' => $this->note,
             'location_texts' => $this->locationTexts,
-            'artwork' => array_map(static fn (ArtworkFile $file) => $file->toArray(), $this->artwork),
+            'artwork' => array_map(
+                static fn (ArtworkFile $artworkFile): array => $artworkFile->toArray(),
+                $this->artwork
+            ),
         ];
     }
 }

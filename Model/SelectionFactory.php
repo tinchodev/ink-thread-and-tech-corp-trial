@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace InkThread\DecorationPricing\Model;
 
+use InkThread\DecorationPricing\Model\Artwork\ArtworkFile;
 use InkThread\DecorationPricing\Model\Artwork\ArtworkFileMapper;
 use InkThread\DecorationPricing\Model\Source\DecorationMethod;
 
@@ -46,6 +47,7 @@ class SelectionFactory
         if (!is_array($rawLocations)) {
             $rawLocations = [$rawLocations];
         }
+
         $locations = [];
         foreach ($rawLocations as $location) {
             if (is_scalar($location) && trim((string)$location) !== '') {
@@ -78,14 +80,14 @@ class SelectionFactory
     public function createFromStored(mixed $data): ?Selection
     {
         $selection = $this->createFromRequestData($data);
-        if ($selection === null || !is_array($data) || !is_array($data['artwork'] ?? null)) {
+        if (!$selection instanceof Selection || !is_array($data) || !is_array($data['artwork'] ?? null)) {
             return $selection;
         }
 
         $artwork = [];
         foreach ($data['artwork'] as $location => $file) {
             $file = $this->artworkFileMapper->fromArray($file);
-            if ($file !== null) {
+            if ($file instanceof ArtworkFile) {
                 $artwork[(string)$location] = $file;
             }
         }

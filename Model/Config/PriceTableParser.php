@@ -42,6 +42,7 @@ class PriceTableParser
             if (!is_array($row)) {
                 continue;
             }
+
             $rowNumber++;
             $location = trim((string)($row['location'] ?? ''));
             $minQty = trim((string)($row['min_qty'] ?? ''));
@@ -50,18 +51,22 @@ class PriceTableParser
             if ($location === '' && $minQty === '' && $price === '') {
                 continue;
             }
+
             if (!$this->printLocation->isValid($location)) {
                 $errors[] = __('Row %1: choose a valid print location.', $rowNumber);
                 continue;
             }
+
             if (!ctype_digit($minQty) || (int)$minQty < 1) {
                 $errors[] = __('Row %1: minimum quantity must be a whole number of 1 or more.', $rowNumber);
                 continue;
             }
+
             if (!is_numeric($price) || (float)$price < 0) {
                 $errors[] = __('Row %1: unit price must be a number of 0 or more.', $rowNumber);
                 continue;
             }
+
             if (isset($table[$location][(int)$minQty])) {
                 $errors[] = __(
                     'Row %1: %2 already has a price for minimum quantity %3.',
@@ -71,10 +76,11 @@ class PriceTableParser
                 );
                 continue;
             }
+
             $table[$location][(int)$minQty] = (float)$price;
         }
 
-        if ($errors) {
+        if ($errors !== []) {
             throw new InvalidPriceTableException($errors);
         }
 

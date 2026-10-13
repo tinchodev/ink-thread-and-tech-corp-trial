@@ -17,11 +17,12 @@ class SelectionFactoryTest extends TestCase
     /**
      * @var SelectionFactory
      */
-    private SelectionFactory $factory;
+    private SelectionFactory $selectionFactory;
 
+    #[\Override]
     protected function setUp(): void
     {
-        $this->factory = new SelectionFactory(new ArtworkFileMapper());
+        $this->selectionFactory = new SelectionFactory(new ArtworkFileMapper());
     }
 
     /**
@@ -29,7 +30,7 @@ class SelectionFactoryTest extends TestCase
      */
     public function testReturnsNullWhenNothingWasPosted(mixed $data): void
     {
-        $this->assertNull($this->factory->createFromRequestData($data));
+        $this->assertNull($this->selectionFactory->createFromRequestData($data));
     }
 
     /**
@@ -42,7 +43,7 @@ class SelectionFactoryTest extends TestCase
 
     public function testNormalisesInput(): void
     {
-        $selection = $this->factory->createFromRequestData([
+        $selection = $this->selectionFactory->createFromRequestData([
             'method' => ' embroidery ',
             'locations' => [' left_chest', '', 'sleeve ', ['nested']],
             'note' => '  Logo on white  ',
@@ -55,7 +56,10 @@ class SelectionFactoryTest extends TestCase
 
     public function testSingleLocationStringIsAccepted(): void
     {
-        $selection = $this->factory->createFromRequestData(['method' => 'screen_print', 'locations' => 'full_back']);
+        $selection = $this->selectionFactory->createFromRequestData([
+            'method' => 'screen_print',
+            'locations' => 'full_back',
+        ]);
 
         $this->assertSame([PrintLocation::FULL_BACK], $selection->getLocations());
         $this->assertSame('', $selection->getNote());
@@ -63,7 +67,7 @@ class SelectionFactoryTest extends TestCase
 
     public function testDuplicatesAreKeptForTheValidator(): void
     {
-        $selection = $this->factory->createFromRequestData([
+        $selection = $this->selectionFactory->createFromRequestData([
             'method' => 'embroidery',
             'locations' => ['sleeve', 'sleeve'],
         ]);
@@ -77,7 +81,7 @@ class SelectionFactoryTest extends TestCase
      */
     public function testMethodNoneDropsLocationsAndNote(array $data): void
     {
-        $selection = $this->factory->createFromRequestData($data);
+        $selection = $this->selectionFactory->createFromRequestData($data);
 
         $this->assertSame(DecorationMethod::NONE, $selection->getMethod());
         $this->assertSame([], $selection->getLocations());
@@ -100,7 +104,7 @@ class SelectionFactoryTest extends TestCase
 
     public function testLocationTextsAreKeptOnlyForSelectedLocations(): void
     {
-        $selection = $this->factory->createFromRequestData([
+        $selection = $this->selectionFactory->createFromRequestData([
             'method' => 'embroidery',
             'locations' => ['left_chest', 'full_back'],
             'location_texts' => [
@@ -116,7 +120,7 @@ class SelectionFactoryTest extends TestCase
 
     public function testRequestDataCannotInjectArtwork(): void
     {
-        $selection = $this->factory->createFromRequestData([
+        $selection = $this->selectionFactory->createFromRequestData([
             'method' => 'embroidery',
             'locations' => ['sleeve'],
             'artwork' => ['sleeve' => ['path' => 'inkthread_decoration/artwork/x.png', 'name' => 'x.png']],
@@ -127,7 +131,7 @@ class SelectionFactoryTest extends TestCase
 
     public function testStoredDataRestoresArtworkForSelectedLocations(): void
     {
-        $selection = $this->factory->createFromStored([
+        $selection = $this->selectionFactory->createFromStored([
             'method' => 'embroidery',
             'locations' => ['sleeve'],
             'artwork' => [
@@ -145,7 +149,7 @@ class SelectionFactoryTest extends TestCase
      */
     public function testStoredArtworkOutsideStorageIsIgnored(string $path): void
     {
-        $selection = $this->factory->createFromStored([
+        $selection = $this->selectionFactory->createFromStored([
             'method' => 'embroidery',
             'locations' => ['sleeve'],
             'artwork' => ['sleeve' => ['path' => $path, 'name' => 'x.png']],
@@ -168,12 +172,12 @@ class SelectionFactoryTest extends TestCase
 
     public function testPricingKeyIgnoresLocationOrderAndNote(): void
     {
-        $first = $this->factory->createFromRequestData([
+        $first = $this->selectionFactory->createFromRequestData([
             'method' => 'embroidery',
             'locations' => ['sleeve', 'left_chest'],
             'note' => 'A',
         ]);
-        $second = $this->factory->createFromRequestData([
+        $second = $this->selectionFactory->createFromRequestData([
             'method' => 'embroidery',
             'locations' => ['left_chest', 'sleeve'],
             'note' => 'B',

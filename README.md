@@ -8,7 +8,7 @@ The decoration and a per-location breakdown carry from cart to checkout to the p
 (≤ 100 chars) and an **artwork file** (PNG, JPG or PDF, ≤ 10 MB). Both are optional and don't change the fee. Files
 are listed per item/location with a download link on the admin order view.
 
-Tested on Magento Open Source **2.4.7-p9**, PHP **8.3**, Luma, with sample data.
+Tested on Magento Open Source **2.4.7-p9**, PHP **8.3** (required: typed class constants), Luma, with sample data.
 
 ## Install
 
@@ -80,7 +80,7 @@ permission.
 |---|---|---|
 | Unit tests (132) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
 | Magento coding standard | `vendor/bin/phpcs --standard=Magento2 --extensions=php,phtml,xml,js,less app/code/InkThread/DecorationPricing` | `docs/checks/phpcs.txt` |
-| Static analysis | `vendor/bin/phpstan analyse -l 6 -a app/autoload.php app/code/InkThread/DecorationPricing` | `docs/checks/phpstan.txt` |
+| Static analysis (level 6; needs `setup:di:compile` first for generated factories) | `vendor/bin/phpstan analyse -c app/code/InkThread/DecorationPricing/phpstan.neon.dist` | `docs/checks/phpstan.txt` |
 | DI compile | `bin/magento setup:di:compile` | `docs/checks/di-compile.txt` |
 | Storefront QA (42 assertions, curl, incl. multipart uploads) | `docs/qa/storefront-qa.sh` | `docs/checks/storefront-qa.txt` |
 | Browser QA (16 checks, headless Chrome, incl. a real file upload) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt`, `docs/screenshots/` |

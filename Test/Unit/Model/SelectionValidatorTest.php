@@ -18,11 +18,12 @@ class SelectionValidatorTest extends TestCase
     /**
      * @var SelectionValidator
      */
-    private SelectionValidator $validator;
+    private SelectionValidator $selectionValidator;
 
+    #[\Override]
     protected function setUp(): void
     {
-        $this->validator = new SelectionValidator(new DecorationMethod(), new PrintLocation());
+        $this->selectionValidator = new SelectionValidator(new DecorationMethod(), new PrintLocation());
     }
 
     /**
@@ -228,12 +229,14 @@ class SelectionValidatorTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please choose at least one print location for Screen print.');
 
-        $this->validator->assertValid(new Selection(DecorationMethod::SCREEN_PRINT, [], ''));
+        $this->selectionValidator->assertValid(new Selection(DecorationMethod::SCREEN_PRINT, [], ''));
     }
 
     public function testAssertValidPassesForValidSelection(): void
     {
-        $this->validator->assertValid(new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::SLEEVE], ''));
+        $this->selectionValidator->assertValid(
+            new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::SLEEVE], '')
+        );
 
         $this->addToAssertionCount(1);
     }
@@ -244,6 +247,6 @@ class SelectionValidatorTest extends TestCase
      */
     private function messages(Selection $selection): array
     {
-        return array_map('strval', $this->validator->validate($selection));
+        return array_map('strval', $this->selectionValidator->validate($selection));
     }
 }

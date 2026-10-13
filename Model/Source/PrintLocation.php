@@ -14,9 +14,13 @@ use Magento\Framework\Data\OptionSourceInterface;
 class PrintLocation implements OptionSourceInterface
 {
     public const LEFT_CHEST = 'left_chest';
+
     public const RIGHT_CHEST = 'right_chest';
+
     public const SLEEVE = 'sleeve';
+
     public const UPPER_BACK = 'upper_back';
+
     public const FULL_BACK = 'full_back';
 
     /**
@@ -62,6 +66,7 @@ class PrintLocation implements OptionSourceInterface
      *
      * @return list<array{value: string, label: string}>
      */
+    #[\Override]
     public function toOptionArray(): array
     {
         $options = [];

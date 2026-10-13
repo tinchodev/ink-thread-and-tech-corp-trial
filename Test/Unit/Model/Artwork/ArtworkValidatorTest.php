@@ -15,23 +15,26 @@ class ArtworkValidatorTest extends TestCase
     /**
      * Smallest valid PNG (1x1 transparent).
      */
-    private const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+    private const string PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8'
+        . 'AAAAASUVORK5CYII=';
 
     /**
      * @var ArtworkValidator
      */
-    private ArtworkValidator $validator;
+    private ArtworkValidator $artworkValidator;
 
     /**
      * @var string[]
      */
     private array $files = [];
 
+    #[\Override]
     protected function setUp(): void
     {
-        $this->validator = new ArtworkValidator();
+        $this->artworkValidator = new ArtworkValidator();
     }
 
+    #[\Override]
     protected function tearDown(): void
     {
         foreach ($this->files as $file) {
@@ -47,7 +50,7 @@ class ArtworkValidatorTest extends TestCase
     {
         $path = $this->tempFile($content);
 
-        $this->assertSame($expectedMime, $this->validator->validate($name, $path, strlen($content)));
+        $this->assertSame($expectedMime, $this->artworkValidator->validate($name, $path, strlen($content)));
     }
 
     /**
@@ -78,7 +81,7 @@ class ArtworkValidatorTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage($message);
 
-        $this->validator->validate($name, $path, $size, $error);
+        $this->artworkValidator->validate($name, $path, $size, $error);
     }
 
     /**
@@ -112,7 +115,7 @@ class ArtworkValidatorTest extends TestCase
      */
     public function testSanitizesDisplayName(string $name, string $expected): void
     {
-        $this->assertSame($expected, $this->validator->sanitizeName($name));
+        $this->assertSame($expected, $this->artworkValidator->sanitizeName($name));
     }
 
     /**
