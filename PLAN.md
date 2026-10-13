@@ -228,7 +228,8 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 2. **Tax and discounts.** Should the fee be taxed like the garment, and should %-off cart rules discount it?
    *(Default: yes to both, as a consequence of putting it in item price.)*
 3. ~~**Which products**~~ **Answered:** only products with the decoration flag (§2.6).
-4. **Note**: required, max length, only when a method is chosen? *(Default: optional, 255 chars, ignored for None.)*
+4. ~~**Note**~~ **Answered:** optional, max 255 characters. *(Still assumed: ignored when method is None, as there is
+   no decoration to annotate.)*
 5. **Left + Right chest** together is allowed and charged twice? *(Default: yes.)*
 6. ~~**Scope**~~ **Answered:** single store for the trial → one global price table, base currency only.
 7. ~~**Frontend**~~ **Answered:** Luma only for now. Hyvä/headless out of scope.
