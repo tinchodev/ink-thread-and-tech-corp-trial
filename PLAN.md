@@ -228,8 +228,8 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 2. **Tax and discounts.**
    - ~~Tax~~ **Answered:** tax applies to garment + decoration. This confirms the fee-in-item-price design (§2.1).
      The fee is taxed with the product's tax class.
-   - **Discounts: still open.** Should %-off cart rules discount the fee? *(Default: yes, which is what the item-price
-     design does naturally. Excluding the fee would need extra discount handling.)*
+   - ~~Discounts~~ **Answered:** yes, %-off cart rules discount the fee too. The item-price design does this
+     with no extra code.
 3. ~~**Which products**~~ **Answered:** only products with the decoration flag (§2.6).
 4. ~~**Note**~~ **Answered:** optional, max 255 characters. *(Still assumed: ignored when method is None, as there is
    no decoration to annotate.)*
