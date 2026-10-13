@@ -28,7 +28,7 @@ class PriceTableParser
     /**
      * Parse and validate rows.
      *
-     * @param array $rows
+     * @param array<mixed> $rows
      * @return array<string, list<array{min_qty: int, price: float}>>
      * @throws InvalidPriceTableException
      */

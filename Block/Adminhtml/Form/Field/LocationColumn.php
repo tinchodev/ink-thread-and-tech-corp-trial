@@ -18,7 +18,7 @@ class LocationColumn extends Select
     /**
      * @param Context $context
      * @param PrintLocation $printLocation
-     * @param array $data
+     * @param array<string,mixed> $data
      */
     public function __construct(
         Context $context,

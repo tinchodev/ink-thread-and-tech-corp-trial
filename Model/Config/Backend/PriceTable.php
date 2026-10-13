@@ -31,7 +31,7 @@ class PriceTable extends ArraySerialized
      * @param PriceTableParser $priceTableParser
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
-     * @param array $data
+     * @param array<string,mixed> $data
      * @param Json|null $serializer
      */
     public function __construct(
@@ -65,7 +65,8 @@ class PriceTable extends ArraySerialized
      */
     public function beforeSave()
     {
-        $value = $this->getValue();
+        // getValue() is documented as string, but the admin form posts an array of rows.
+        $value = $this->getData('value');
         if (is_array($value)) {
             unset($value['__empty']);
             try {

@@ -59,6 +59,8 @@ class PrintLocation implements OptionSourceInterface
 
     /**
      * @inheritdoc
+     *
+     * @return list<array{value: string, label: string}>
      */
     public function toOptionArray(): array
     {

@@ -1,0 +1,104 @@
+<?php
+/**
+ * InkThread Decoration Pricing
+ */
+declare(strict_types=1);
+
+namespace InkThread\DecorationPricing\Model;
+
+use InkThread\DecorationPricing\Model\Source\DecorationMethod;
+use InkThread\DecorationPricing\Model\Source\PrintLocation;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Phrase;
+
+/**
+ * Location rules for a decoration selection.
+ */
+class SelectionValidator
+{
+    public const MAX_LOCATIONS = 3;
+    public const MAX_NOTE_LENGTH = 255;
+
+    /**
+     * Location pairs that cannot be chosen together.
+     */
+    private const EXCLUSIVE_PAIRS = [
+        [PrintLocation::UPPER_BACK, PrintLocation::FULL_BACK],
+    ];
+
+    /**
+     * @param DecorationMethod $decorationMethod
+     * @param PrintLocation $printLocation
+     */
+    public function __construct(
+        private readonly DecorationMethod $decorationMethod,
+        private readonly PrintLocation $printLocation
+    ) {
+    }
+
+    /**
+     * Return every broken rule as a customer-facing message (empty when valid).
+     *
+     * @param Selection $selection
+     * @return Phrase[]
+     */
+    public function validate(Selection $selection): array
+    {
+        if (!$this->decorationMethod->isValid($selection->getMethod())) {
+            return [__('Please choose a valid decoration method.')];
+        }
+        if (!$selection->isDecorated()) {
+            return [];
+        }
+
+        $errors = [];
+        $locations = $selection->getLocations();
+
+        if (!$locations) {
+            $errors[] = __(
+                'Please choose at least one print location for %1.',
+                $this->decorationMethod->getLabel($selection->getMethod())
+            );
+        }
+        if (count($locations) > self::MAX_LOCATIONS) {
+            $errors[] = __('You can choose up to %1 print locations.', self::MAX_LOCATIONS);
+        }
+        if (count($locations) !== count(array_unique($locations))) {
+            $errors[] = __('Each print location can only be chosen once.');
+        }
+        foreach (array_unique($locations) as $location) {
+            if (!$this->printLocation->isValid($location)) {
+                $errors[] = __('"%1" is not a valid print location.', $location);
+            }
+        }
+        foreach (self::EXCLUSIVE_PAIRS as [$first, $second]) {
+            if (in_array($first, $locations, true) && in_array($second, $locations, true)) {
+                $errors[] = __(
+                    '%1 and %2 cannot both be selected.',
+                    $this->printLocation->getLabel($first),
+                    $this->printLocation->getLabel($second)
+                );
+            }
+        }
+        if (mb_strlen($selection->getNote()) > self::MAX_NOTE_LENGTH) {
+            $errors[] = __('The decoration note cannot be longer than %1 characters.', self::MAX_NOTE_LENGTH);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Throw with all broken rules joined, if any.
+     *
+     * @param Selection $selection
+     * @return void
+     * @throws LocalizedException
+     */
+    public function assertValid(Selection $selection): void
+    {
+        $errors = $this->validate($selection);
+        if ($errors) {
+            throw new LocalizedException(__(implode(' ', array_map('strval', $errors))));
+        }
+    }
+}
