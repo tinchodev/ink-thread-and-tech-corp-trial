@@ -9,20 +9,37 @@ This is the agent-produced plan **before any code**. Edits made after review are
 
 On the product page, a customer picks a decoration method (None / Embroidery / Screen print),
 1–3 print locations and an optional note. The per-unit decoration fee is the sum of each selected
-location's price at the cart line's quantity tier. Prices are configured in admin. The fee
+location's price at the quantity tier. **Client clarification (Q1):** the tier qty is the combined qty of all
+cart lines with the same product and the same decoration (e.g. 6 S + 6 M of one tee = 12+ tier), not the single
+line qty. See §2.0. Prices are configured in admin. The fee
 re-prices on qty/option changes, and method/locations/note/fee (with a per-location breakdown)
 flow cart → checkout → order, visible in cart, admin order view and customer order view,
 for guests and logged-in customers. No core edits, unit-tested, Magento coding standard clean.
 
 ## 2. Key design decisions
 
+### 2.0 Tier quantity: pooled across matching cart lines (client decision)
+- **Group key:** visible (top-level) quote item's product id (the parent id for configurables) + method +
+  sorted set of locations. Lines in the same group share one tier qty = sum of their qtys.
+- **Not in the key:** the note, and the configurable child (size/colour). Different products never pool, even
+  with identical decoration. *Assumption, as Q&A was one round. Documented in the README.*
+- Lines with method None, and deleted items, are excluded.
+- `Model/TierQuantityResolver` computes the groups from a list of quote items. It is pure logic over a small item
+  adapter, so it can be unit-tested.
+- Observer on `sales_quote_collect_totals_before` stamps each item's product with its group tier qty
+  (`inkthread_decoration_tier_qty`) right before totals run. It is re-stamped on every collection,
+  so it is never stale.
+- Consequence: changing the qty of, or removing, one line **re-prices its sibling lines**. Every totals pass covers
+  all items, so this is automatic. It is called out in QA and in the cart breakdown text.
+
 ### 2.1 Where the fee lives: inside the item unit price (chosen)
 The fee is added to the quote item's final price, the same way native custom options add
-their price. `row_total = (product final price + decoration unit fee) × qty`.
+their price. `row_total = (product final price + decoration unit fee at group tier) × line qty`.
 
 **Extension point:** `after` plugin on `Magento\Catalog\Model\Product\Type\Price::getFinalPrice($qty, $product)`.
 - The quote's `Subtotal` collector calls `$product->getFinalPrice($quoteItem->getQty())` on every
-  totals collection, so a qty change in the cart re-tiers automatically. No custom re-pricing code needed.
+  totals collection, so qty changes are picked up. The plugin uses the stamped group tier qty (§2.0) when present
+  and falls back to `$qty`.
 - Configurable's `Price` subclass inherits the plugin. Its internal `parent::getFinalPrice()` call on the
   child does not go through the interceptor, so the fee is added exactly once, on the parent line.
   This must be verified (see §6).
@@ -92,9 +109,10 @@ The price plugin, the cart display and the order snapshot all call the same calc
     emails, invoices and PDFs with no templates overridden.
   Snapshotting means later admin price changes never rewrite historical orders.
 - No new DB columns. Trade-off: the fee is not SQL-queryable for reporting (noted in the README).
+- The snapshot also records the tier qty and the line qty (they differ when lines pooled).
 - Example breakdown lines:
   `Decoration: Embroidery` · `Left chest: $3.25 / unit` · `Sleeve: $2.75 / unit` ·
-  `Decoration fee: $6.00 / unit ($72.00 for 12)` · `Note: …`
+  `Decoration fee: $6.00 / unit ($36.00 for 6; 12+ tier from 12 matching units in cart)` · `Note: …`
 
 ### 2.6 Product page UI
 - Block + ViewModel + template, added to the add-to-cart form via `catalog_product_view.xml`
@@ -120,7 +138,8 @@ app/code/InkThread/DecorationPricing/
   etc/module.xml, di.xml, config.xml, acl.xml, adminhtml/system.xml, events.xml (frontend+adminhtml)
   Api/PriceTableProviderInterface.php
   Model/Selection.php, SelectionFactory.php (from buy request / JSON), SelectionValidator.php
-  Model/FeeCalculator.php, FeeResult.php
+  Model/FeeCalculator.php, FeeResult.php, TierQuantityResolver.php
+  Observer/StampTierQuantity.php
   Model/Source/DecorationMethod.php, PrintLocation.php
   Model/Config/PriceTableProvider.php, Backend/PriceTable.php, Block/Adminhtml/PriceTableField.php
   Observer/CaptureDecorationSelection.php
@@ -140,7 +159,7 @@ Delivered as its own git repo (`inkthread/module-decoration-pricing`), installab
 |---|---|---|---|
 | 1 | Skeleton, sources, config.xml defaults, system.xml + backend validation | 30m | `Add module skeleton and admin price tables` |
 | 2 | Selection, validator, calculator, provider + **unit tests first** | 60m | `Add fee calculator and selection rules with tests` |
-| 3 | Prepare observer + final price plugin, verify simple & configurable totals | 40m | `Price decoration into cart items` |
+| 3 | Prepare observer, tier-qty resolver + stamping observer, final price plugin; verify simple & configurable totals | 55m | `Price decoration into cart items` |
 | 4 | Cart breakdown plugin + order snapshot plugin | 30m | `Show breakdown in cart and persist to order` |
 | 5 | PDP block/template/JS validation, edit-prefill, attribute patch | 45m | `Add product page decoration options` |
 | 6 | QA pass (§6), static checks (§5), README + agent notes | 35m | `Docs and QA fixes` |
@@ -169,11 +188,20 @@ Outputs are saved to `docs/checks/` for the deliverable.
 - Missing tier / unconfigured location ⇒ exception (fail closed).
 - Config parsing: unordered rows, string numbers, empty config.
 
+**Unit (TierQuantityResolver):**
+- 6 S + 6 M of the same configurable, same decoration ⇒ both lines tier qty 12 (client example).
+- Pooled boundaries: 6 + 5 = 11 vs 6 + 6 = 12 (embroidery). 23/24 and 95/96 split across lines (screen).
+- Same product with a different method or locations ⇒ not pooled. Different products with the same decoration ⇒ not pooled.
+- Location order irrelevant (L chest + Sleeve == Sleeve + L chest). A different note is still pooled.
+- Method None and deleted items are excluded. A single line ⇒ its own qty.
+
 **Manual QA (browser, recorded):**
 1. Guest, simple product, Embroidery L chest + Sleeve, qty 12 → line = base×12 + $72.00.
 2. Change qty in cart 12 → 11 → 48 → 47: fee re-tiers each time and the breakdown text updates.
 3. Same product, a different decoration → separate cart line.
 4. Configurable tee (choose size/colour) → fee counted once and shown on the parent line.
+4b. Same tee + same decoration: 6 × S and 6 × M → both lines at the 12+ tier. Change M to 5 → both drop to 1–11.
+    Remove the S line → M re-tiers alone.
 5. Edit item in cart → form prefilled → switch to Screen print Full back → re-priced.
 6. Invalid combos on the PDP (no location, 4 locations, Upper + Full back) → message; also bypass the JS (curl) → server rejects.
 7. Place order as guest and as a logged-in customer → breakdown in success/customer order view, admin order view, email (Mailhog).
@@ -188,9 +216,7 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 **Hyvä not supported**). Unit tests plus `di:compile` will catch signature changes.
 
 ## 8. Clarifying questions to send before starting (one round)
-1. **Tier quantity basis.** The brief says the cart line qty. But a configurable tee ordered as 6 S + 6 M is two
-   lines, so each is priced at the 1–11 tier, not 12. Is per-line really intended, or should the tier use the total
-   qty of the same parent product + same decoration across lines? *(Default: per line, as written.)*
+1. ~~**Tier quantity basis.**~~ **Answered:** the client says 6 S + 6 M should get the 12+ tier → pool matching lines (§2.0).
 2. **Tax and discounts.** Should the fee be taxed like the garment, and should %-off cart rules discount it?
    *(Default: yes to both, as a consequence of putting it in item price.)*
 3. **Which products** get the options: all, or only flagged ones? *(Default: Yes/No attribute.)*
