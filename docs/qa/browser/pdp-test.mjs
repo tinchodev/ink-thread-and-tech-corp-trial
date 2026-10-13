@@ -2,6 +2,16 @@
 // Requires: Node 22+, google-chrome, sample data with the decoration flag on 24-MB01 (id 1) and MS09 (id 478).
 // Usage: QA_OUT=docs/screenshots node docs/qa/browser/pdp-test.mjs
 import { launch } from './cdp.mjs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+// Artwork fixtures
+const FIXTURES = mkdtempSync(join(process.env.QA_TMP || tmpdir(), 'artwork-'));
+const PNG = join(FIXTURES, 'logo.png');
+const SVG = join(FIXTURES, 'logo.svg');
+writeFileSync(PNG, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
+writeFileSync(SVG, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
 
 const BASE = 'https://magento.test';
 const OUT = process.env.QA_OUT || '.';
@@ -34,6 +44,9 @@ const helpers = (pid) => `
                     if ($(this).text()) { s.reasons[v] = $(this).text(); }
                 });
                 s.banners = root.find('.message:visible').length;
+                s.detailRows = root.find('[data-role=decoration-detail]:visible').map(function () {
+                    return this.getAttribute('data-location');
+                }).get();
                 s.noteDisabled = root.find('[data-role=decoration-note]').prop('disabled');
                 s.errors = root.find('.mage-error:visible').map(function () { return $(this).text(); }).get();
                 return s;
@@ -105,6 +118,32 @@ await b.evaluate(`__d.method('none')`);
 s = await state();
 check('A9 Back to None: locations cleared and disabled', s.checked.length === 0 && Object.values(s.disabled).every(Boolean));
 
+// ---- A10-A12. Per-location text and artwork (extension) ----
+await b.evaluate(`__d.method('embroidery'); __d.click('left_chest'); __d.click('full_back'); true`);
+s = await state();
+check('A10 Detail rows shown only for checked locations', JSON.stringify(s.detailRows) === '["left_chest","full_back"]',
+    JSON.stringify(s.detailRows));
+
+await b.setFiles('#inkthread-decoration-1-details-left_chest-file', [SVG]);
+await submit();
+s = await state();
+items = await cart();
+check('A11 SVG artwork: client error, nothing new added',
+    s.errors.some((e) => /PNG, JPG or PDF/.test(e)) && items.length === 1, JSON.stringify(s.errors));
+
+await b.setFiles('#inkthread-decoration-1-details-left_chest-file', [PNG]);
+await b.evaluate(`require('jquery')('#inkthread-decoration-1-details-left_chest-text').val('ACME');
+    require('jquery')('#inkthread-decoration-1-details-full_back-text').val('TEAM 2026');
+    require('jquery')('#inkthread-decoration-1 [data-role=decoration-note]').val(''); document.getElementById('qty').value = 3; true`);
+await submit();
+items = await cart();
+const art = items.find((i) => i.options.some((o) => /Artwork: logo\.png/.test(o)));
+check('A12 Upload through the real form: text + artwork on the cart line',
+    art && art.options.some((o) => o === 'Left chest: $4.00 / unit · Text: "ACME" · Artwork: logo.png')
+        && art.options.some((o) => o === 'Full back: $7.50 / unit · Text: "TEAM 2026"'), JSON.stringify(art));
+await b.evaluate(`document.getElementById('inkthread-decoration-1').scrollIntoView({block: 'center'}); true`);
+await b.screenshot(`${OUT}/pdp-location-text-artwork.png`);
+
 // ---- B. Configurable product: Ryker Tee (id 478, $32), Black / M ----
 await b.goto(`${BASE}/ryker-lumatech-trade-tee-crew-neck.html`);
 await b.waitFor(`window.require && require.defined && require.defined('jquery') && !!document.querySelector('.swatch-option[data-option-id="168"]')`);
@@ -124,8 +163,10 @@ check('B1 Configurable Black/M x6 embroidery L chest + sleeve: $32 + $7.50',
 // ---- C. Cart and checkout pages render the breakdown ----
 await b.goto(`${BASE}/checkout/cart/`);
 const cartText = await b.evaluate(`document.querySelector('#shopping-cart-table').innerText`);
-check('C1 Cart page shows breakdown for both lines',
-    (cartText.match(/Decoration fee/g) || []).length === 2 && /Decoration note\s*Logo v2 & "white"/.test(cartText));
+const decoratedLines = (await cart()).filter((i) => i.options.some((o) => /^Decoration fee/.test(o))).length;
+check(`C1 Cart page shows the breakdown for every decorated line (${decoratedLines})`,
+    decoratedLines === 3 && (cartText.match(/Decoration fee/g) || []).length === decoratedLines
+        && /Decoration note\s*Logo v2 & "white"/.test(cartText) && /Text: "ACME" · Artwork: logo\.png/.test(cartText));
 await b.screenshot(`${OUT}/cart-breakdown.png`);
 
 await b.goto(`${BASE}/checkout/`, `!!document.querySelector('.opc-block-summary .items-in-cart')`);

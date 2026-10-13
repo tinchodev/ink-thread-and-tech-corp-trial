@@ -90,7 +90,13 @@ export async function launch({ port = 9333, width = 1280, height = 1600, profile
         const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
         writeFileSync(path, Buffer.from(data, 'base64'));
     };
+    const setFiles = async (selector, files) => {
+        const { root } = await send('DOM.getDocument', { depth: -1 });
+        const { nodeId } = await send('DOM.querySelector', { nodeId: root.nodeId, selector });
+        if (!nodeId) throw new Error('no element for ' + selector);
+        await send('DOM.setFileInputFiles', { nodeId, files });
+    };
     const close = async () => { try { await send('Browser.close'); } catch { /* closing */ } proc.kill(); };
 
-    return { send, evaluate, waitFor, goto, screenshot, close, consoleErrors, sleep };
+    return { send, evaluate, waitFor, goto, screenshot, setFiles, close, consoleErrors, sleep };
 }

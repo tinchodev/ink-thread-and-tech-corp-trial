@@ -5,7 +5,7 @@
 # Requires Magento sample data with the decoration flag set on 24-MB01 (id 1) and MS09 (id 478), and 24-UG06 (id 15)
 # left unflagged. IDs below are the sample-data ones: color 93 (Black 49), size 142 (S 167, M 168).
 # Stock: sample data ships 100 units per product; give 24-MB01, MS09-S-Black and MS09-M-Black a large qty (S4 adds 100).
-# Usage: BASE=https://magento.test docs/qa/storefront-qa.sh
+# Usage: BASE=https://magento.test docs/qa/storefront-qa.sh   (needs curl, php, openssl, base64)
 set -u
 BASE=${BASE:-https://magento.test}
 CURL_OPTS=${CURL_OPTS:--sk}
@@ -97,6 +97,52 @@ check "edited to screen print full back: 32 + 4.00" "$(line MS09-M-Black | cut -
 id=$(line MS09-M-Black | cut -d'|' -f1)
 post "/checkout/cart/updateItemOptions/id/$id/" "product=478" "id=$id" "qty=6" "$SA[93]=49" "$SA[142]=168" "$D[method]=screen_print" "$L=full_back" "$L=upper_back"
 check "invalid edit rejected, line unchanged" "$(line MS09-M-Black | cut -d'|' -f4)" "36.00"
+
+echo "== S9 per-location text and artwork uploads (multipart, as the AJAX form posts)"
+printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' | base64 -d > "$WORK/logo.png"
+printf '%%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%%%EOF\n' > "$WORK/back.pdf"
+echo '<svg xmlns="http://www.w3.org/2000/svg"></svg>' > "$WORK/logo.svg"
+echo '<html><body>x</body></html>' > "$WORK/fake.png"
+head -c 11534336 /dev/zero > "$WORK/big.png"
+postf() { local url=$1; shift; local args=(-F "form_key=$FK"); for p in "$@"; do args+=(-F "$p"); done; c -o /dev/null "${args[@]}" "$BASE$url"; }
+new_session s9
+postf /checkout/cart/add/ product=1 qty=12 "$D[method]=embroidery" "$D[locations][]=left_chest" "$D[locations][]=full_back" \
+    "$D[location_texts][left_chest]=ACME" "$D[location_texts][sleeve]=not selected" \
+    "inkthread_artwork_left_chest=@$WORK/logo.png" "inkthread_artwork_full_back=@$WORK/back.pdf" "inkthread_artwork_sleeve=@$WORK/logo.png"
+l=$(line 24-MB01)
+contains "left chest text + PNG on the location line" "$l" 'Left chest: $3.25 / unit · Text: "ACME" · Artwork: logo.png'
+contains "full back PDF on the location line" "$l" 'Full back: $6.50 / unit · Artwork: back.pdf'
+case "$l" in *"not selected"*|*Sleeve*) check "unselected location's text/upload ignored" "present" "absent";; *) check "unselected location's text/upload ignored" "absent" "absent";; esac
+check "fee unaffected by text/artwork: 34 + 3.25 + 6.50" "$(cut -d'|' -f4 <<<"$l")" "43.75"
+for t in "SVG|logo.svg" "HTML renamed .png|fake.png" "over 10 MB|big.png"; do
+    new_session "s9${t%%|*}"; postf /checkout/cart/add/ product=1 qty=3 "$D[method]=embroidery" "$D[locations][]=sleeve" "inkthread_artwork_sleeve=@$WORK/${t##*|}"
+    check "artwork rejected: ${t%%|*}" "$(cart | wc -l | tr -d ' ')" "0"
+done
+new_session s9t
+add 1 3 "$D[method]=embroidery" "$L=sleeve" "$D[location_texts][sleeve]=$(printf 'a%.0s' $(seq 101))"
+check "location text over 100 chars rejected" "$(cart | wc -l | tr -d ' ')" "0"
+add 1 3 "$D[method]=embroidery" "$L=sleeve" "$D[location_texts][sleeve]=TEAM+%3C2026%3E"
+check "location text with < > rejected" "$(cart | wc -l | tr -d ' ')" "0"
+
+echo "== S10 edit: keep artwork via token, forged token ignored, remove"
+new_session s10
+postf /checkout/cart/add/ product=1 qty=12 "$D[method]=embroidery" "$D[locations][]=left_chest" "$D[location_texts][left_chest]=ACME" "inkthread_artwork_left_chest=@$WORK/logo.png"
+token_of() { c "$BASE/checkout/cart/configure/id/$1/product_id/1/" | tr -d '\n' \
+    | grep -o 'name="inkthread_decoration\[artwork_tokens\]\[left_chest\]"\s*value="[^"]*"' | sed 's/.*value="//;s/"$//' \
+    | php -r 'echo html_entity_decode(stream_get_contents(STDIN), ENT_QUOTES | ENT_HTML5);'; }
+edit() { local id; id=$(line 24-MB01 | cut -d'|' -f1); postf "/checkout/cart/updateItemOptions/id/$id/" product=1 "id=$id" qty=12 "$D[method]=embroidery" "$D[locations][]=left_chest" "$@"; }
+id=$(line 24-MB01 | cut -d'|' -f1); token=$(token_of "$id")
+contains "edit page offers the current artwork" "$(c "$BASE/checkout/cart/configure/id/$id/product_id/1/")" "Current artwork: logo.png"
+edit "$D[location_texts][left_chest]=ACME CORP" "$D[artwork_tokens][left_chest]=$token"
+contains "text changed, artwork kept" "$(line 24-MB01)" 'Text: "ACME CORP" · Artwork: logo.png'
+edit "$D[artwork_tokens][left_chest]=${token%????}AAAA"
+case "$(line 24-MB01)" in *Artwork*) check "forged token ignored" "kept" "dropped";; *) check "forged token ignored" "dropped" "dropped";; esac
+postf "/checkout/cart/updateItemOptions/id/$(line 24-MB01 | cut -d'|' -f1)/" product=1 "id=$(line 24-MB01 | cut -d'|' -f1)" qty=12 \
+    "$D[method]=embroidery" "$D[locations][]=left_chest" "inkthread_artwork_left_chest=@$WORK/back.pdf"
+contains "new upload replaces" "$(line 24-MB01)" "Artwork: back.pdf"
+token=$(token_of "$(line 24-MB01 | cut -d'|' -f1)")
+edit "$D[artwork_tokens][left_chest]=$token" "$D[artwork_remove][left_chest]=1"
+case "$(line 24-MB01)" in *Artwork*) check "remove drops the artwork" "kept" "dropped";; *) check "remove drops the artwork" "dropped" "dropped";; esac
 
 echo
 echo "$PASS passed, $FAIL failed"

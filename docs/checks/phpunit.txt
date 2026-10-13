@@ -1,9 +1,38 @@
 $ vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist --testdox app/code/InkThread/DecorationPricing/Test/Unit
 PHPUnit 9.6.36 by Sebastian Bergmann and contributors.
 
+Artwork Token (InkThread\DecorationPricing\Test\Unit\Model\Artwork\ArtworkToken)
+ ✔ Round trip
+ ✔ Tampered token is rejected
+ ✔ Validly encrypted foreign path is rejected
+ ✔ Garbage is rejected with data set "null"
+ ✔ Garbage is rejected with data set "empty"
+ ✔ Garbage is rejected with data set "array"
+ ✔ Garbage is rejected with data set "plain text"
+
+Artwork Validator (InkThread\DecorationPricing\Test\Unit\Model\Artwork\ArtworkValidator)
+ ✔ Accepts matching content with data set "png"
+ ✔ Accepts matching content with data set "jpg upper-case extension"
+ ✔ Accepts matching content with data set "jpeg"
+ ✔ Accepts matching content with data set "pdf"
+ ✔ Rejects invalid files with data set "svg"
+ ✔ Rejects invalid files with data set "php renamed"
+ ✔ Rejects invalid files with data set "html as png"
+ ✔ Rejects invalid files with data set "png as pdf"
+ ✔ Rejects invalid files with data set "over 10 MB"
+ ✔ Rejects invalid files with data set "php ini size"
+ ✔ Rejects invalid files with data set "partial upload"
+ ✔ Rejects invalid files with data set "empty file"
+ ✔ Sanitizes display name with data set "plain"
+ ✔ Sanitizes display name with data set "path stripped"
+ ✔ Sanitizes display name with data set "windows path"
+ ✔ Sanitizes display name with data set "markup replaced"
+ ✔ Sanitizes display name with data set "nothing left"
+
 Breakdown Formatter (InkThread\DecorationPricing\Test\Unit\Model\BreakdownFormatter)
  ✔ Brief worked example breakdown
  ✔ Pooled tier and note are shown
+ ✔ Location text and artwork are shown on the location line
  ✔ Without fee only the selection is shown
 
 Price Table Parser (InkThread\DecorationPricing\Test\Unit\Model\Config\PriceTableParser)
@@ -70,6 +99,12 @@ Selection Factory (InkThread\DecorationPricing\Test\Unit\Model\SelectionFactory)
  ✔ Method none drops locations and note with data set "empty method"
  ✔ Method none drops locations and note with data set "missing method"
  ✔ Method none drops locations and note with data set "non-scalar method"
+ ✔ Location texts are kept only for selected locations
+ ✔ Request data cannot inject artwork
+ ✔ Stored data restores artwork for selected locations
+ ✔ Stored artwork outside storage is ignored with data set "other var dir"
+ ✔ Stored artwork outside storage is ignored with data set "traversal"
+ ✔ Stored artwork outside storage is ignored with data set "absolute"
  ✔ Pricing key ignores location order and note
 
 Selection Validator (InkThread\DecorationPricing\Test\Unit\Model\SelectionValidator)
@@ -92,6 +127,8 @@ Selection Validator (InkThread\DecorationPricing\Test\Unit\Model\SelectionValida
  ✔ Note with markup is rejected with data set "lone less-than"
  ✔ Note with markup is rejected with data set "lone greater-than"
  ✔ Note with other special characters is allowed
+ ✔ Location text at limit is valid
+ ✔ Location text rules
  ✔ All broken rules are reported
  ✔ Assert valid throws with message
  ✔ Assert valid passes for valid selection
@@ -114,6 +151,6 @@ Tier Quantity Resolver (InkThread\DecorationPricing\Test\Unit\Model\TierQuantity
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+47=95"
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+48=96"
 
-Time: 00:00.089, Memory: 12.00 MB
+Time: 00:00.130, Memory: 14.00 MB
 
-OK (99 tests, 185 assertions)
+OK (132 tests, 228 assertions)

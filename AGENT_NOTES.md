@@ -44,6 +44,17 @@
    - It deleted the compiled Luma CSS to force a LESS rebuild, not knowing web requests run in production mode
      in this sandbox (no on-demand static generation). The storefront was unstyled until it redeployed.
 
+8. **Artwork extension (requested after step 6): QA and UI slips, caught by the agent.**
+   - The curl edit test posted the artwork token straight from the HTML attribute. `escapeHtmlAttr` encodes base64
+     characters as entities, so "keep the file" seemed broken. A browser decodes them; the test now does too.
+   - A download check right after login hit the admin's first-request redirect to the dashboard and looked like a
+     failure.
+   - The admin artwork table showed a 45-byte file as "0.0 KB". Noticed in a screenshot.
+   - The download controller first redirected errors to the referer, which for a direct link was the storefront
+     home page. It now goes back to the order.
+   - Luma only sets `multipart/form-data` on the add-to-cart form for products with native file options. The AJAX
+     submit didn't need it, but a non-AJAX submit would have silently dropped files. The widget now sets it.
+
 ## Where the agent went beyond the requirement
 
 Kept, but worth a reviewer's judgement:
@@ -54,6 +65,8 @@ Kept, but worth a reviewer's judgement:
   locations without a price table. The brief has no such case with the shipped prices.
 * **"(tier for N matching units)"** in the breakdown when lines are pooled.
 * **Revertable data patch**, and `@api` on the price-table provider interface.
+* **Per-location text and artwork upload**: requested by Martin after the core build (not in the brief), see
+  PLAN.md §10.
 
 Sandbox change made by the agent (not in the module): admin secret URL keys turned off
 (`admin/security/use_form_key = 0`) to script admin checks.

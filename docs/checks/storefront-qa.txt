@@ -35,5 +35,21 @@ PASS  edit page preselects method
 PASS  edit page prechecks 2 locations
 PASS  edited to screen print full back: 32 + 4.00
 PASS  invalid edit rejected, line unchanged
+== S9 per-location text and artwork uploads (multipart, as the AJAX form posts)
+PASS  left chest text + PNG on the location line
+PASS  full back PDF on the location line
+PASS  unselected location's text/upload ignored
+PASS  fee unaffected by text/artwork: 34 + 3.25 + 6.50
+PASS  artwork rejected: SVG
+PASS  artwork rejected: HTML renamed .png
+PASS  artwork rejected: over 10 MB
+PASS  location text over 100 chars rejected
+PASS  location text with < > rejected
+== S10 edit: keep artwork via token, forged token ignored, remove
+PASS  edit page offers the current artwork
+PASS  text changed, artwork kept
+PASS  forged token ignored
+PASS  new upload replaces
+PASS  remove drops the artwork
 
-28 passed, 0 failed
+42 passed, 0 failed
