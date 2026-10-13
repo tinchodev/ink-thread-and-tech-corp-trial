@@ -22,7 +22,7 @@ for guests and logged-in customers. No core edits, unit-tested, Magento coding s
 - **Group key:** visible (top-level) quote item's product id (the parent id for configurables) + method +
   sorted set of locations. Lines in the same group share one tier qty = sum of their qtys.
 - **Not in the key:** the note, and the configurable child (size/colour). Different products never pool, even
-  with identical decoration. *Assumption, as Q&A was one round. Documented in the README.*
+  with identical decoration. *Confirmed.*
 - Lines with method None, and deleted items, are excluded.
 - `Model/TierQuantityResolver` computes the groups from a list of quote items. It is pure logic over a small item
   adapter, so it can be unit-tested.
