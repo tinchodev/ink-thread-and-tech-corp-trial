@@ -1,0 +1,51 @@
+<?php
+/**
+ * InkThread Decoration Pricing: artwork files on the admin order view.
+ *
+ * @var \Magento\Sales\Block\Adminhtml\Order\AbstractOrder $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+
+/** @var \InkThread\DecorationPricing\ViewModel\Adminhtml\OrderArtwork $viewModel */
+$viewModel = $block->getData('view_model');
+$rows = $viewModel->getRows($block->getOrder());
+if (!$rows) {
+    return;
+}
+?>
+<section class="admin__page-section inkthread-decoration-artwork">
+    <div class="admin__page-section-title">
+        <span class="title"><?= $escaper->escapeHtml(__('Decoration Artwork')) ?></span>
+    </div>
+    <div class="admin__table-wrapper">
+        <table class="data-table admin__table-primary">
+            <thead>
+                <tr class="headings">
+                    <th><?= $escaper->escapeHtml(__('Item')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('SKU')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Location')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('File')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Size')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($rows as $row): ?>
+                    <tr>
+                        <td><?= $escaper->escapeHtml($row['item']) ?></td>
+                        <td><?= $escaper->escapeHtml($row['sku']) ?></td>
+                        <td><?= $escaper->escapeHtml($row['location']) ?></td>
+                        <td>
+                            <a href="<?= $escaper->escapeUrl($row['url']) ?>">
+                                <?= $escaper->escapeHtml($row['name']) ?>
+                            </a>
+                        </td>
+                        <td><?= $escaper->escapeHtml($row['size'] < 1024
+                            ? $row['size'] . ' B'
+                            : number_format($row['size'] / 1024 / ($row['size'] < 1048576 ? 1 : 1024), 1)
+                                . ($row['size'] < 1048576 ? ' KB' : ' MB')) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</section>

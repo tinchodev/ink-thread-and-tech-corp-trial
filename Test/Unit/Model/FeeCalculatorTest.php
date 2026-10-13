@@ -249,6 +249,8 @@ class FeeCalculatorTest extends TestCase
                 'method' => DecorationMethod::EMBROIDERY,
                 'locations' => [PrintLocation::SLEEVE],
                 'note' => 'Logo v2',
+                'location_texts' => [],
+                'artwork' => [],
                 'location_prices' => [PrintLocation::SLEEVE => 2.75],
                 'unit_fee' => 2.75,
                 'line_qty' => 5.0,

@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace InkThread\DecorationPricing\Observer;
 
+use InkThread\DecorationPricing\Model\Artwork\RequestArtworkResolver;
 use InkThread\DecorationPricing\Model\FeeCalculator;
 use InkThread\DecorationPricing\Model\Quote\ItemFeeProvider;
 use InkThread\DecorationPricing\Model\SelectionFactory;
@@ -42,12 +43,14 @@ class CaptureDecorationSelection implements ObserverInterface
      * @param SelectionFactory $selectionFactory
      * @param SelectionValidator $selectionValidator
      * @param FeeCalculator $feeCalculator
+     * @param RequestArtworkResolver $artworkResolver
      * @param Json $serializer
      */
     public function __construct(
         private readonly SelectionFactory $selectionFactory,
         private readonly SelectionValidator $selectionValidator,
         private readonly FeeCalculator $feeCalculator,
+        private readonly RequestArtworkResolver $artworkResolver,
         private readonly Json $serializer
     ) {
         $this->topLevelProducts = new \WeakMap();
@@ -82,6 +85,7 @@ class CaptureDecorationSelection implements ObserverInterface
         }
         $this->selectionValidator->assertValid($selection);
         $this->feeCalculator->assertOffered($selection);
+        $selection = $selection->withArtwork($this->artworkResolver->resolve($buyRequest, $selection));
 
         $product->addCustomOption(
             ItemFeeProvider::OPTION_CODE,

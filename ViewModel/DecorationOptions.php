@@ -7,6 +7,9 @@ declare(strict_types=1);
 namespace InkThread\DecorationPricing\ViewModel;
 
 use InkThread\DecorationPricing\Api\PriceTableProviderInterface;
+use InkThread\DecorationPricing\Model\Artwork\ArtworkToken;
+use InkThread\DecorationPricing\Model\Artwork\ArtworkValidator;
+use InkThread\DecorationPricing\Model\Artwork\RequestArtworkResolver;
 use InkThread\DecorationPricing\Model\SelectionFactory;
 use InkThread\DecorationPricing\Model\SelectionValidator;
 use InkThread\DecorationPricing\Model\Source\DecorationMethod;
@@ -27,6 +30,7 @@ class DecorationOptions implements ArgumentInterface
      * @param PrintLocation $printLocation
      * @param PriceTableProviderInterface $priceTableProvider
      * @param SelectionFactory $selectionFactory
+     * @param ArtworkToken $artworkToken
      * @param Json $serializer
      */
     public function __construct(
@@ -34,6 +38,7 @@ class DecorationOptions implements ArgumentInterface
         private readonly PrintLocation $printLocation,
         private readonly PriceTableProviderInterface $priceTableProvider,
         private readonly SelectionFactory $selectionFactory,
+        private readonly ArtworkToken $artworkToken,
         private readonly Json $serializer
     ) {
     }
@@ -90,16 +95,64 @@ class DecorationOptions implements ArgumentInterface
     }
 
     /**
+     * Maximum text length per location.
+     *
+     * @return int
+     */
+    public function getMaxLocationTextLength(): int
+    {
+        return SelectionValidator::MAX_LOCATION_TEXT_LENGTH;
+    }
+
+    /**
+     * File input name for a location's artwork.
+     *
+     * @param string $location
+     * @return string
+     */
+    public function getArtworkFieldName(string $location): string
+    {
+        return RequestArtworkResolver::FILE_FIELD_PREFIX . $location;
+    }
+
+    /**
+     * Value for the file input's accept attribute.
+     *
+     * @return string
+     */
+    public function getArtworkAccept(): string
+    {
+        return implode(',', array_map(static fn ($ext) => '.' . $ext, array_keys(ArtworkValidator::ALLOWED_TYPES)));
+    }
+
+    /**
      * Current selection when editing a cart item (null on a fresh product page).
      *
+     * Artwork comes from the encrypted tokens in the buy request: each entry has the display name and the token to
+     * post back to keep the file.
+     *
      * @param Product $product
-     * @return array{method: string, locations: string[], note: string}|null
+     * @return array<string,mixed>|null
      */
     public function getPreconfigured(Product $product): ?array
     {
         $data = $product->getPreconfiguredValues()->getData(CaptureDecorationSelection::REQUEST_KEY);
+        $selection = $this->selectionFactory->createFromRequestData($data);
+        if ($selection === null) {
+            return null;
+        }
 
-        return $this->selectionFactory->createFromRequestData($data)?->toArray();
+        $result = $selection->toArray();
+        $result['artwork'] = [];
+        $tokens = is_array($data['artwork_tokens'] ?? null) ? $data['artwork_tokens'] : [];
+        foreach ($tokens as $location => $token) {
+            $file = $this->artworkToken->decode($token);
+            if ($file !== null && in_array($location, $selection->getLocations(), true)) {
+                $result['artwork'][$location] = ['name' => $file->getName(), 'token' => $token];
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -130,6 +183,10 @@ class DecorationOptions implements ArgumentInterface
                 'exclusive' => (string)__('(not with %1)'),
                 'notOffered' => (string)__('(not available)'),
                 'noMarkup' => (string)__('The decoration note cannot contain the characters < or >.'),
+            ],
+            'artwork' => [
+                'maxSize' => ArtworkValidator::MAX_SIZE,
+                'extensions' => array_keys(ArtworkValidator::ALLOWED_TYPES),
             ],
             'labels' => $this->printLocation->getLabels(),
         ]);

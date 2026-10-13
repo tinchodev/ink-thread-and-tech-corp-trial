@@ -68,7 +68,7 @@ class ItemFeeProvider
     public function decode(string $value): ?Selection
     {
         try {
-            $selection = $this->selectionFactory->createFromRequestData($this->serializer->unserialize($value));
+            $selection = $this->selectionFactory->createFromStored($this->serializer->unserialize($value));
         } catch (\InvalidArgumentException $e) {
             return null;
         }

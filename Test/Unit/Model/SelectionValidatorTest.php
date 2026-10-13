@@ -172,6 +172,39 @@ class SelectionValidatorTest extends TestCase
         );
     }
 
+    public function testLocationTextAtLimitIsValid(): void
+    {
+        $selection = new Selection(
+            DecorationMethod::EMBROIDERY,
+            [PrintLocation::LEFT_CHEST],
+            '',
+            [PrintLocation::LEFT_CHEST => str_repeat('é', SelectionValidator::MAX_LOCATION_TEXT_LENGTH)]
+        );
+
+        $this->assertSame([], $this->messages($selection));
+    }
+
+    public function testLocationTextRules(): void
+    {
+        $selection = new Selection(
+            DecorationMethod::EMBROIDERY,
+            [PrintLocation::LEFT_CHEST, PrintLocation::FULL_BACK],
+            '',
+            [
+                PrintLocation::LEFT_CHEST => str_repeat('a', SelectionValidator::MAX_LOCATION_TEXT_LENGTH + 1),
+                PrintLocation::FULL_BACK => 'TEAM <2026>',
+            ]
+        );
+
+        $this->assertSame(
+            [
+                'The text for Left chest cannot be longer than 100 characters.',
+                'The text for Full back cannot contain the characters < or >.',
+            ],
+            $this->messages($selection)
+        );
+    }
+
     public function testAllBrokenRulesAreReported(): void
     {
         $selection = new Selection(

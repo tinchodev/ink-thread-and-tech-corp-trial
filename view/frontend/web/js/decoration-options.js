@@ -6,6 +6,7 @@
  * - Locations without a price table for the chosen method are disabled.
  * - At most N locations; mutually exclusive locations disable each other.
  * A greyed-out location shows its reason inline; valid selections never show a message.
+ * Each checked location shows its own optional text and artwork inputs; hidden ones are disabled (not posted).
  */
 define([
     'jquery',
@@ -23,6 +24,23 @@ define([
         $t('The decoration note cannot contain the characters < or >.')
     );
 
+    $.validator.addMethod(
+        'inkthread-decoration-artwork',
+        function (value, element) {
+            var file = element.files && element.files[0],
+                config = $(element).closest('.inkthread-decoration').data('inkthreadArtwork') || {},
+                extension;
+
+            if (!file) {
+                return true;
+            }
+            extension = file.name.split('.').pop().toLowerCase();
+
+            return (config.extensions || []).indexOf(extension) !== -1 && file.size <= config.maxSize;
+        },
+        $t('Artwork must be a PNG, JPG or PDF file of at most 10 MB.')
+    );
+
     $.widget('inkthread.decorationOptions', {
         options: {
             noneMethod: 'none',
@@ -30,7 +48,8 @@ define([
             exclusivePairs: [],
             offeredLocations: {},
             messages: {},
-            labels: {}
+            labels: {},
+            artwork: {}
         },
 
         /** @inheritdoc */
@@ -38,6 +57,10 @@ define([
             this.method = this.element.find('[data-role="decoration-method"]');
             this.checkboxes = this.element.find('[data-role="decoration-locations"] input[type="checkbox"]');
             this.note = this.element.find('[data-role="decoration-note"]');
+            this.details = this.element.find('[data-role="decoration-detail"]');
+            this.element.data('inkthreadArtwork', this.options.artwork);
+            // Luma only sets multipart when the product has native file options; needed for a non-AJAX submit.
+            this.element.closest('form').attr('enctype', 'multipart/form-data');
 
             this._on(this.method, {change: this._refresh});
             this._on(this.checkboxes, {change: this._refresh});
@@ -91,6 +114,13 @@ define([
                     .toggleClass('_disabled', checkbox.disabled)
                     .find('[data-role="decoration-reason"]').text(reason);
             }.bind(this));
+
+            this.details.each(function () {
+                var show = decorated && checked.indexOf(this.getAttribute('data-location')) !== -1;
+
+                this.hidden = !show;
+                $(this).find('input').prop('disabled', !show);
+            });
 
             this.note.prop('disabled', !decorated);
             this.element.find('[data-role="decoration-locations"], [data-role="decoration-note-field"]')

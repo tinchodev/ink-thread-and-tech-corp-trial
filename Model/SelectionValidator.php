@@ -18,6 +18,7 @@ class SelectionValidator
 {
     public const MAX_LOCATIONS = 3;
     public const MAX_NOTE_LENGTH = 255;
+    public const MAX_LOCATION_TEXT_LENGTH = 100;
 
     /**
      * Location pairs that cannot be chosen together.
@@ -87,6 +88,19 @@ class SelectionValidator
         // is refused at input rather than relying on every output path to escape it.
         if (strpbrk($selection->getNote(), '<>') !== false) {
             $errors[] = __('The decoration note cannot contain the characters < or >.');
+        }
+        foreach ($selection->getLocationTexts() as $location => $text) {
+            $label = $this->printLocation->getLabel($location);
+            if (mb_strlen($text) > self::MAX_LOCATION_TEXT_LENGTH) {
+                $errors[] = __(
+                    'The text for %1 cannot be longer than %2 characters.',
+                    $label,
+                    self::MAX_LOCATION_TEXT_LENGTH
+                );
+            }
+            if (strpbrk($text, '<>') !== false) {
+                $errors[] = __('The text for %1 cannot contain the characters < or >.', $label);
+            }
         }
 
         return $errors;

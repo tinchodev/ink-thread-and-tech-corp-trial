@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace InkThread\DecorationPricing\Test\Unit\Model;
 
+use InkThread\DecorationPricing\Model\Artwork\ArtworkFile;
 use InkThread\DecorationPricing\Model\BreakdownFormatter;
 use InkThread\DecorationPricing\Model\FeeCalculator;
 use InkThread\DecorationPricing\Model\Selection;
@@ -75,6 +76,32 @@ class BreakdownFormatterTest extends TestCase
             $lines[3],
             'Note is passed through as plain text; markup is refused at input by SelectionValidator.'
         );
+    }
+
+    public function testLocationTextAndArtworkAreShownOnTheLocationLine(): void
+    {
+        $selection = new Selection(
+            DecorationMethod::EMBROIDERY,
+            [PrintLocation::LEFT_CHEST, PrintLocation::SLEEVE],
+            '',
+            [PrintLocation::LEFT_CHEST => 'ACME'],
+            [
+                PrintLocation::LEFT_CHEST => new ArtworkFile(
+                    'inkthread_decoration/artwork/a.png',
+                    'logo.png',
+                    1,
+                    'image/png'
+                ),
+            ]
+        );
+
+        $lines = $this->formatter->format($selection, $this->calculator->calculate($selection, 12));
+
+        $this->assertSame(
+            ['label' => 'Left chest', 'value' => '$3.25 / unit · Text: "ACME" · Artwork: logo.png'],
+            $lines[1]
+        );
+        $this->assertSame(['label' => 'Sleeve', 'value' => '$2.75 / unit'], $lines[2]);
     }
 
     public function testWithoutFeeOnlyTheSelectionIsShown(): void

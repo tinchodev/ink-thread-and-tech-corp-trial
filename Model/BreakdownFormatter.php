@@ -44,13 +44,19 @@ class BreakdownFormatter
         if ($fee === null) {
             $locations = array_map([$this->printLocation, 'getLabel'], $selection->getLocations());
             $lines = [['label' => (string)__('Decoration'), 'value' => $method . ': ' . implode(', ', $locations)]];
+            foreach ($selection->getLocations() as $location) {
+                $details = $this->locationDetails($selection, $location);
+                if ($details !== []) {
+                    $label = $this->printLocation->getLabel($location);
+                    $lines[] = ['label' => $label, 'value' => implode(' · ', $details)];
+                }
+            }
         } else {
             $lines = [['label' => (string)__('Decoration'), 'value' => $method]];
             foreach ($fee->getLocationPrices() as $location => $price) {
-                $lines[] = [
-                    'label' => $this->printLocation->getLabel($location),
-                    'value' => (string)__('%1 / unit', $this->money($price, $scope)),
-                ];
+                $parts = $this->locationDetails($selection, $location);
+                array_unshift($parts, (string)__('%1 / unit', $this->money($price, $scope)));
+                $lines[] = ['label' => $this->printLocation->getLabel($location), 'value' => implode(' · ', $parts)];
             }
             $value = (string)__(
                 '%1 / unit × %2 = %3',
@@ -69,6 +75,27 @@ class BreakdownFormatter
         }
 
         return $lines;
+    }
+
+    /**
+     * Text and artwork of one location, as display fragments.
+     *
+     * @param Selection $selection
+     * @param string $location
+     * @return string[]
+     */
+    private function locationDetails(Selection $selection, string $location): array
+    {
+        $details = [];
+        if ($selection->getLocationText($location) !== '') {
+            $details[] = (string)__('Text: "%1"', $selection->getLocationText($location));
+        }
+        $artwork = $selection->getArtwork()[$location] ?? null;
+        if ($artwork !== null) {
+            $details[] = (string)__('Artwork: %1', $artwork->getName());
+        }
+
+        return $details;
     }
 
     /**

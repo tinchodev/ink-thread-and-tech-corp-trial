@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace InkThread\DecorationPricing\Test\Unit\Model;
 
+use InkThread\DecorationPricing\Model\Artwork\ArtworkFileMapper;
 use InkThread\DecorationPricing\Model\SelectionFactory;
 use InkThread\DecorationPricing\Model\Source\DecorationMethod;
 use InkThread\DecorationPricing\Model\Source\PrintLocation;
@@ -20,7 +21,7 @@ class SelectionFactoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->factory = new SelectionFactory();
+        $this->factory = new SelectionFactory(new ArtworkFileMapper());
     }
 
     /**
@@ -94,6 +95,74 @@ class SelectionFactoryTest extends TestCase
             'empty method' => [['method' => '', 'locations' => ['sleeve']]],
             'missing method' => [['locations' => ['sleeve']]],
             'non-scalar method' => [['method' => ['embroidery']]],
+        ];
+    }
+
+    public function testLocationTextsAreKeptOnlyForSelectedLocations(): void
+    {
+        $selection = $this->factory->createFromRequestData([
+            'method' => 'embroidery',
+            'locations' => ['left_chest', 'full_back'],
+            'location_texts' => [
+                'left_chest' => '  ACME ',
+                'full_back' => '',
+                'sleeve' => 'not selected',
+                'x' => ['y'],
+            ],
+        ]);
+
+        $this->assertSame([PrintLocation::LEFT_CHEST => 'ACME'], $selection->getLocationTexts());
+    }
+
+    public function testRequestDataCannotInjectArtwork(): void
+    {
+        $selection = $this->factory->createFromRequestData([
+            'method' => 'embroidery',
+            'locations' => ['sleeve'],
+            'artwork' => ['sleeve' => ['path' => 'inkthread_decoration/artwork/x.png', 'name' => 'x.png']],
+        ]);
+
+        $this->assertSame([], $selection->getArtwork());
+    }
+
+    public function testStoredDataRestoresArtworkForSelectedLocations(): void
+    {
+        $selection = $this->factory->createFromStored([
+            'method' => 'embroidery',
+            'locations' => ['sleeve'],
+            'artwork' => [
+                'sleeve' => ['path' => 'inkthread_decoration/artwork/a.png', 'name' => 'logo.png', 'size' => 10],
+                'full_back' => ['path' => 'inkthread_decoration/artwork/b.png', 'name' => 'not-selected.png'],
+            ],
+        ]);
+
+        $this->assertSame(['sleeve'], array_keys($selection->getArtwork()));
+        $this->assertSame('logo.png', $selection->getArtwork()['sleeve']->getName());
+    }
+
+    /**
+     * @dataProvider unsafeArtworkPathProvider
+     */
+    public function testStoredArtworkOutsideStorageIsIgnored(string $path): void
+    {
+        $selection = $this->factory->createFromStored([
+            'method' => 'embroidery',
+            'locations' => ['sleeve'],
+            'artwork' => ['sleeve' => ['path' => $path, 'name' => 'x.png']],
+        ]);
+
+        $this->assertSame([], $selection->getArtwork());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unsafeArtworkPathProvider(): array
+    {
+        return [
+            'other var dir' => ['log/system.log'],
+            'traversal' => ['inkthread_decoration/artwork/../../app/etc/env.php'],
+            'absolute' => ['/etc/passwd'],
         ];
     }
 

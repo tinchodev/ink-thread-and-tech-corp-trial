@@ -13,6 +13,19 @@
             opacity: .5;
         }
 
+        .inkthread-decoration-detail {
+            margin: 0 0 @indent__s;
+
+            &[hidden] {
+                display: none;
+            }
+
+            .inkthread-decoration-artwork {
+                display: block;
+                margin-top: @indent__xs;
+            }
+        }
+
         .inkthread-decoration-reason {
             font-size: @font-size__s;
             margin-left: 2px;
