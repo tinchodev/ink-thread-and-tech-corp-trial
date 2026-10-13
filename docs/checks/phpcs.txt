@@ -1,0 +1,3 @@
+$ vendor/bin/phpcs --standard=Magento2 --extensions=php,phtml,xml,js,less app/code/InkThread/DecorationPricing
+(tool self-update / deprecation notices removed; no findings were removed)
+exit code: 0

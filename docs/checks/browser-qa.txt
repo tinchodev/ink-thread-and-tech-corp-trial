@@ -1,0 +1,18 @@
+$ QA_OUT=docs/screenshots node docs/qa/browser/pdp-test.mjs   (headless Chrome)
+PASS  A1 method None: all locations and note disabled  -- {"left_chest":true,"right_chest":true,"sleeve":true,"upper_back":true,"full_back":true}
+PASS  A2 Embroidery: all locations enabled, note enabled
+PASS  A3 Upper back checked: Full back disabled, reason shown inline, no banner  -- {"full_back":"(not with Upper back)"}
+PASS  A4 Three checked: remaining location disabled, no extra message  -- {"full_back":"(not with Upper back)"}
+PASS  A5 Unchecked all: Full back enabled again, no reasons
+PASS  A6 Submit with method but no location: client error, nothing added  -- ["","Please choose at least one print location."]
+PASS  A7 Note with "<": client error, nothing added  -- ["","The decoration note cannot contain the characters < or >."]
+PASS  A8 Valid submit: added at $34 + $4.00 (screen print full back, 12 units)  -- {"sku":"24-MB01","qty":12,"price":38,"options":["Decoration: Screen print","Full back: $4.00 / unit","Decoration fee: $4.00 / unit × 12 = $48.00","Decoration note: Logo v2 & \"white\""]}
+PASS  A9 Back to None: locations cleared and disabled
+PASS  B1 Configurable Black/M x6 embroidery L chest + sleeve: $32 + $7.50  -- {"sku":"MS09-M-Black","qty":6,"price":39.5,"options":["Size: M","Color: Black","Decoration: Embroidery","Left chest: $4.00 / unit","Sleeve: $3.50 / unit","Decoration fee: $7.50 / unit × 6 = $45.00"]}
+PASS  C1 Cart page shows breakdown for both lines
+PASS  C2 Checkout summary shows decoration lines  -- Order Summary 18 Items in Cart Joust Duffle Bag Qty12 $456.00 View Details Decoration Screen print Full back $4.00 / unit Decoration fee $4.00 / unit × 12 = $48.00 Decoration note Logo v2 & "white" Ryker LumaTech™ Tee (Crew-neck) Qty6 $237.00 View Details Size M Color Black Decoration Embroidery Lef
+PASS  D1 No console errors from the module
+INFO  all console errors on visited pages: 0
+INFO  CSP violations on last page: 0
+
+13/13 passed

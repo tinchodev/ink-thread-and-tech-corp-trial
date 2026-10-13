@@ -1,0 +1,4 @@
+$ vendor/bin/phpstan analyse -l 6 -a app/autoload.php app/code/InkThread/DecorationPricing
+(tool self-update / deprecation notices removed; no findings were removed)
+ [OK] No errors                                                                 
+exit code: 0

@@ -1,0 +1,4 @@
+$ bin/magento setup:di:compile
+Compilation was started.
+Generated code and dependency injection configuration successfully.
+exit code: 0

@@ -1,0 +1,39 @@
+$ CURL_OPTS="-sk --resolve magento.test:443:127.0.0.1" docs/qa/storefront-qa.sh
+== S1 brief worked example, simple product (Joust Duffle Bag $34)
+PASS  unit price 34 + 6.00
+PASS  breakdown
+== S2 qty changes in cart re-tier at the boundaries
+PASS  qty 11 -> unit 41.50
+PASS  qty 48 -> unit 38.50
+PASS  qty 47 -> unit 40.00
+PASS  qty 12 -> unit 40.00
+== S3 same product, different decoration = separate line
+PASS  two bag lines
+== S4 brief worked example 2: screen print, 100 units, full back
+PASS  unit price 34 + 2.50
+PASS  fee line
+== S5 left + right chest charged as two locations (client Q5)
+PASS  unit 34 + 1.50 + 1.50
+== S6 pooled tier: 6 S + 6 M of one tee, same decoration (client Q1)
+PASS  S line at 12+ tier
+PASS  M line at 12+ tier (location order and note do not split the pool)
+PASS  pooled tier shown
+PASS  M -> 5: S line drops to 1-11 tier
+PASS  M -> 5: M line drops to 1-11 tier
+PASS  S removed: M alone at 6 re-tiers
+== S7 invalid requests are rejected server-side (nothing added)
+PASS  method without location
+PASS  4 locations
+PASS  upper back + full back
+PASS  unknown location
+PASS  note of 256 chars
+PASS  note with markup
+PASS  decoration on unflagged product
+PASS  unflagged product without decoration still adds
+== S8 edit cart item: prefill, re-price, re-validate
+PASS  edit page preselects method
+PASS  edit page prechecks 2 locations
+PASS  edited to screen print full back: 32 + 4.00
+PASS  invalid edit rejected, line unchanged
+
+28 passed, 0 failed

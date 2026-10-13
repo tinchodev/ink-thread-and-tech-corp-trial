@@ -1,0 +1,119 @@
+$ vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist --testdox app/code/InkThread/DecorationPricing/Test/Unit
+PHPUnit 9.6.36 by Sebastian Bergmann and contributors.
+
+Breakdown Formatter (InkThread\DecorationPricing\Test\Unit\Model\BreakdownFormatter)
+ ✔ Brief worked example breakdown
+ ✔ Pooled tier and note are shown
+ ✔ Without fee only the selection is shown
+
+Price Table Parser (InkThread\DecorationPricing\Test\Unit\Model\Config\PriceTableParser)
+ ✔ Rows are cast and sorted by min qty
+ ✔ Empty and non array rows are skipped
+ ✔ Empty input gives empty table
+ ✔ All invalid rows are reported with row numbers
+
+Price Table Provider (InkThread\DecorationPricing\Test\Unit\Model\Config\PriceTableProvider)
+ ✔ Reads tiers from config and caches per method
+ ✔ Missing config gives no tiers
+ ✔ Corrupt config gives no tiers and is logged with data set "invalid json"
+ ✔ Corrupt config gives no tiers and is logged with data set "invalid row"
+
+Fee Calculator (InkThread\DecorationPricing\Test\Unit\Model\FeeCalculator)
+ ✔ Brief worked example embroidery
+ ✔ Brief worked example screen print
+ ✔ Tier boundaries with data set "embroidery left chest 1"
+ ✔ Tier boundaries with data set "embroidery left chest 11"
+ ✔ Tier boundaries with data set "embroidery left chest 12"
+ ✔ Tier boundaries with data set "embroidery left chest 47"
+ ✔ Tier boundaries with data set "embroidery left chest 48"
+ ✔ Tier boundaries with data set "embroidery right chest 12"
+ ✔ Tier boundaries with data set "embroidery sleeve 11"
+ ✔ Tier boundaries with data set "embroidery sleeve 48"
+ ✔ Tier boundaries with data set "embroidery upper back 47"
+ ✔ Tier boundaries with data set "embroidery upper back 48"
+ ✔ Tier boundaries with data set "embroidery full back 11"
+ ✔ Tier boundaries with data set "embroidery full back 12"
+ ✔ Tier boundaries with data set "embroidery full back 10000"
+ ✔ Tier boundaries with data set "screen left chest 1"
+ ✔ Tier boundaries with data set "screen left chest 23"
+ ✔ Tier boundaries with data set "screen left chest 24"
+ ✔ Tier boundaries with data set "screen left chest 95"
+ ✔ Tier boundaries with data set "screen left chest 96"
+ ✔ Tier boundaries with data set "screen sleeve 23"
+ ✔ Tier boundaries with data set "screen sleeve 24"
+ ✔ Tier boundaries with data set "screen sleeve 96"
+ ✔ Tier boundaries with data set "screen upper back 95"
+ ✔ Tier boundaries with data set "screen upper back 96"
+ ✔ Tier boundaries with data set "screen full back 23"
+ ✔ Tier boundaries with data set "screen full back 24"
+ ✔ Three locations are summed
+ ✔ Left and right chest are charged as two locations
+ ✔ Pooled tier prices line at pooled quantity
+ ✔ Pooled quantity below boundary stays in lower tier
+ ✔ Unpooled line is not flagged as pooled
+ ✔ No decoration has no fee
+ ✔ Unconfigured location fails closed
+ ✔ Quantity below lowest tier fails closed
+ ✔ Assert offered passes when every location has a table
+ ✔ Assert offered rejects location without table
+ ✔ Non positive quantity is rejected
+ ✔ To array contains snapshot data
+
+Selection Factory (InkThread\DecorationPricing\Test\Unit\Model\SelectionFactory)
+ ✔ Returns null when nothing was posted with data set "null"
+ ✔ Returns null when nothing was posted with data set "string"
+ ✔ Returns null when nothing was posted with data set "int"
+ ✔ Normalises input
+ ✔ Single location string is accepted
+ ✔ Duplicates are kept for the validator
+ ✔ Method none drops locations and note with data set "explicit none"
+ ✔ Method none drops locations and note with data set "empty method"
+ ✔ Method none drops locations and note with data set "missing method"
+ ✔ Method none drops locations and note with data set "non-scalar method"
+ ✔ Pricing key ignores location order and note
+
+Selection Validator (InkThread\DecorationPricing\Test\Unit\Model\SelectionValidator)
+ ✔ Valid selections with data set "none"
+ ✔ Valid selections with data set "one location"
+ ✔ Valid selections with data set "three locations"
+ ✔ Valid selections with data set "upper back with chest"
+ ✔ Valid selections with data set "full back alone"
+ ✔ Valid selections with data set "note at max length (multibyte)"
+ ✔ Unknown method is rejected
+ ✔ Location is required when method is chosen
+ ✔ More than three locations is rejected
+ ✔ Duplicate location is rejected
+ ✔ Unknown location is rejected
+ ✔ Upper back and full back cannot be combined with data set "pair"
+ ✔ Upper back and full back cannot be combined with data set "reversed order"
+ ✔ Upper back and full back cannot be combined with data set "with a third location"
+ ✔ Note longer than limit is rejected
+ ✔ Note with markup is rejected with data set "tag"
+ ✔ Note with markup is rejected with data set "lone less-than"
+ ✔ Note with markup is rejected with data set "lone greater-than"
+ ✔ Note with other special characters is allowed
+ ✔ All broken rules are reported
+ ✔ Assert valid throws with message
+ ✔ Assert valid passes for valid selection
+
+Tier Quantity Resolver (InkThread\DecorationPricing\Test\Unit\Model\TierQuantityResolver)
+ ✔ Client example six small plus six medium is twelve
+ ✔ Single line uses its own quantity
+ ✔ Different method is not pooled
+ ✔ Different locations are not pooled
+ ✔ Different products are not pooled
+ ✔ Location order and note do not split the pool
+ ✔ Undecorated lines keep their own quantity and do not pool
+ ✔ Several pools in one cart
+ ✔ Pooled boundaries are priced at the pooled tier with data set "embroidery 6+5=11"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "embroidery 6+6=12"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "embroidery 40+7=47"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "embroidery 40+8=48"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "screen 12+11=23"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "screen 12+12=24"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+47=95"
+ ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+48=96"
+
+Time: 00:00.089, Memory: 12.00 MB
+
+OK (99 tests, 185 assertions)
