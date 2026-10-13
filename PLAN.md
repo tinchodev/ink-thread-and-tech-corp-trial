@@ -123,8 +123,14 @@ The price plugin, the cart display and the order snapshot all call the same calc
 - **CSP-safe:** no inline JS, only `x-magento-init`. (This sandbox has `Yireo_DisableCsp` enabled, and a clean
   install won't, so this must be checked with CSP on.)
 - All output escaped (the note is user input → XSS).
-- Which products show it: a `Yes/No` product attribute `inkthread_decoration_enabled` (data patch)
-  set on sample-data tees/hoodies. *(Open question §8.3. If the answer is "all products", drop the attribute.)*
+- **Only flagged products** (client answer Q3): `Yes/No` product attribute `inkthread_decoration_enabled`
+  (data patch, global scope, default No, in its own "Decoration" group). For configurables the flag is on the parent.
+  - The PDP block renders only when the flag is set.
+  - **Server-side too:** the prepare observer rejects decoration params for unflagged products, so a crafted POST
+    can't decorate or price a product that isn't eligible. Lines already in the cart keep their decoration if the
+    flag is later turned off. The flag is checked at add/edit time only (documented).
+  - The patch only creates the attribute and doesn't touch catalog data, so it works without sample data. For the demo,
+    flag a few sample tees/hoodies via admin "Update attributes". The steps go in the README.
 
 ### 2.7 Guests and logged-in customers
 No special code: everything hangs off quote items. Verify the guest → login quote merge keeps
@@ -164,7 +170,7 @@ Delivered as its own git repo (`inkthread/module-decoration-pricing`), installab
 | 5 | PDP block/template/JS validation, edit-prefill, attribute patch | 45m | `Add product page decoration options` |
 | 6 | QA pass (§6), static checks (§5), README + agent notes | 35m | `Docs and QA fixes` |
 
-If time runs short, cut in this order: attribute patch → client-side JS validation (server rules remain) →
+If time runs short, cut in this order: client-side JS validation (server rules remain) →
 admin backend validation. Pricing, persistence and tests are never cut.
 
 ## 5. Checks run on every step
@@ -207,6 +213,7 @@ Outputs are saved to `docs/checks/` for the deliverable.
 7. Place order as guest and as a logged-in customer → breakdown in success/customer order view, admin order view, email (Mailhog).
 8. Change admin prices after ordering → old order unchanged; new cart uses new prices.
 9. Login with a guest cart → lines and decorations merged intact.
+10. Unflagged product → no decoration form; crafted POST with decoration params → rejected, no fee.
 
 ## 7. Upgrade risk (for README)
 Touch points: `Product\Type\Price::getFinalPrice`, `catalog_product_type_prepare_*_options` event,
@@ -219,7 +226,7 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 1. ~~**Tier quantity basis.**~~ **Answered:** the client says 6 S + 6 M should get the 12+ tier → pool matching lines (§2.0).
 2. **Tax and discounts.** Should the fee be taxed like the garment, and should %-off cart rules discount it?
    *(Default: yes to both, as a consequence of putting it in item price.)*
-3. **Which products** get the options: all, or only flagged ones? *(Default: Yes/No attribute.)*
+3. ~~**Which products**~~ **Answered:** only products with the decoration flag (§2.6).
 4. **Note**: required, max length, only when a method is chosen? *(Default: optional, 255 chars, ignored for None.)*
 5. **Left + Right chest** together is allowed and charged twice? *(Default: yes.)*
 6. **Scope**: is global/website-level pricing enough, or are per-store prices needed? Multi-currency?
