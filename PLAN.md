@@ -225,8 +225,11 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 
 ## 8. Clarifying questions to send before starting (one round)
 1. ~~**Tier quantity basis.**~~ **Answered:** the client says 6 S + 6 M should get the 12+ tier → pool matching lines (§2.0).
-2. **Tax and discounts.** Should the fee be taxed like the garment, and should %-off cart rules discount it?
-   *(Default: yes to both, as a consequence of putting it in item price.)*
+2. **Tax and discounts.**
+   - ~~Tax~~ **Answered:** tax applies to garment + decoration. This confirms the fee-in-item-price design (§2.1).
+     The fee is taxed with the product's tax class.
+   - **Discounts: still open.** Should %-off cart rules discount the fee? *(Default: yes, which is what the item-price
+     design does naturally. Excluding the fee would need extra discount handling.)*
 3. ~~**Which products**~~ **Answered:** only products with the decoration flag (§2.6).
 4. ~~**Note**~~ **Answered:** optional, max 255 characters. *(Still assumed: ignored when method is None, as there is
    no decoration to annotate.)*
