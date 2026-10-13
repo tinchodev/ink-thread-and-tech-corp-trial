@@ -64,6 +64,27 @@ class FeeCalculator
     }
 
     /**
+     * Check every selected location has a price table for the method.
+     *
+     * Quantity-independent: the tier is only known once the cart is totalled.
+     *
+     * @param Selection $selection
+     * @return void
+     * @throws PricingNotConfiguredException
+     */
+    public function assertOffered(Selection $selection): void
+    {
+        if (!$selection->isDecorated()) {
+            return;
+        }
+        foreach ($selection->getLocations() as $location) {
+            if (!$this->priceTableProvider->getTiers($selection->getMethod(), $location)) {
+                throw $this->notOfferedException($selection->getMethod(), $location);
+            }
+        }
+    }
+
+    /**
      * Price of the highest tier whose min_qty does not exceed the quantity.
      *
      * @param string $method
@@ -76,11 +97,7 @@ class FeeCalculator
     {
         $tiers = $this->priceTableProvider->getTiers($method, $location);
         if (!$tiers) {
-            throw new PricingNotConfiguredException(__(
-                '%1 is not available for %2.',
-                $this->printLocation->getLabel($location),
-                $this->decorationMethod->getLabel($method)
-            ));
+            throw $this->notOfferedException($method, $location);
         }
 
         $price = null;
@@ -99,5 +116,21 @@ class FeeCalculator
         }
 
         return $price;
+    }
+
+    /**
+     * Exception for a location without a price table.
+     *
+     * @param string $method
+     * @param string $location
+     * @return PricingNotConfiguredException
+     */
+    private function notOfferedException(string $method, string $location): PricingNotConfiguredException
+    {
+        return new PricingNotConfiguredException(__(
+            '%1 is not available for %2.',
+            $this->printLocation->getLabel($location),
+            $this->decorationMethod->getLabel($method)
+        ));
     }
 }

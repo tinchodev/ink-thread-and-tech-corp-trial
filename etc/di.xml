@@ -3,4 +3,9 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="InkThread\DecorationPricing\Api\PriceTableProviderInterface"
                 type="InkThread\DecorationPricing\Model\Config\PriceTableProvider"/>
+
+    <type name="Magento\Catalog\Model\Product\Type\Price">
+        <plugin name="inkthread_decoration_add_fee"
+                type="InkThread\DecorationPricing\Plugin\AddDecorationFeeToFinalPrice"/>
+    </type>
 </config>

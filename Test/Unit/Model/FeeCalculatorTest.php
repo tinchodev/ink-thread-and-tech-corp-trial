@@ -203,6 +203,32 @@ class FeeCalculatorTest extends TestCase
         $calculator->calculate(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], ''), 11);
     }
 
+    public function testAssertOfferedPassesWhenEveryLocationHasATable(): void
+    {
+        $this->calculator->assertOffered(
+            new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::LEFT_CHEST, PrintLocation::FULL_BACK], '')
+        );
+        $this->calculator->assertOffered(new Selection(DecorationMethod::NONE, [], ''));
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testAssertOfferedRejectsLocationWithoutTable(): void
+    {
+        $calculator = $this->createCalculator($this->createProvider([
+            DecorationMethod::SCREEN_PRINT => [
+                PrintLocation::SLEEVE => [['min_qty' => 1, 'price' => 1.75]],
+            ],
+        ]));
+
+        $this->expectException(PricingNotConfiguredException::class);
+        $this->expectExceptionMessage('Full back is not available for Screen print.');
+
+        $calculator->assertOffered(
+            new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::SLEEVE, PrintLocation::FULL_BACK], '')
+        );
+    }
+
     public function testNonPositiveQuantityIsRejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
