@@ -22,7 +22,7 @@ class SelectionValidator
     /**
      * Location pairs that cannot be chosen together.
      */
-    private const EXCLUSIVE_PAIRS = [
+    public const EXCLUSIVE_PAIRS = [
         [PrintLocation::UPPER_BACK, PrintLocation::FULL_BACK],
     ];
 

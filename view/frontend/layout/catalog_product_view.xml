@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * InkThread Decoration Pricing
+ *
+ * The add-to-cart form renders either product.info.form.content (product without options) or the options wrapper
+ * (configurable / custom options), never both, so the fieldset is added to each; only one renders.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="product.info.form.content">
+            <block class="Magento\Catalog\Block\Product\View"
+                   name="inkthread.decoration.options"
+                   before="product.info.addtocart"
+                   template="InkThread_DecorationPricing::product/view/decoration.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">InkThread\DecorationPricing\ViewModel\DecorationOptions</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+        <referenceBlock name="product.info.options.wrapper">
+            <block class="Magento\Catalog\Block\Product\View"
+                   name="inkthread.decoration.options.wrapper"
+                   after="-"
+                   template="InkThread_DecorationPricing::product/view/decoration.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">InkThread\DecorationPricing\ViewModel\DecorationOptions</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>

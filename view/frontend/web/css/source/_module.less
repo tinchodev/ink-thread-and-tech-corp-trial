@@ -1,0 +1,25 @@
+// InkThread Decoration Pricing: product page decoration fieldset
+
+& when (@media-common = true) {
+    .inkthread-decoration {
+        margin: @indent__base 0;
+
+        .field.choice {
+            display: inline-block;
+            margin: 0 @indent__base @indent__s 0;
+        }
+
+        ._disabled {
+            opacity: .5;
+        }
+
+        .inkthread-decoration-hint {
+            margin-top: @indent__s;
+
+            // Luma's .message sets display: block, which would override the hidden attribute.
+            &[hidden] {
+                display: none;
+            }
+        }
+    }
+}

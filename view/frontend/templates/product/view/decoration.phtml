@@ -1,0 +1,94 @@
+<?php
+/**
+ * InkThread Decoration Pricing
+ *
+ * @var \Magento\Catalog\Block\Product\View $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+
+/** @var \InkThread\DecorationPricing\ViewModel\DecorationOptions $viewModel */
+$viewModel = $block->getData('view_model');
+$product = $block->getProduct();
+if (!$viewModel->isEnabled($product)) {
+    return;
+}
+
+$field = $viewModel->getFieldName();
+$preconfigured = $viewModel->getPreconfigured($product);
+$selectedMethod = $preconfigured['method'] ?? 'none';
+$selectedLocations = $preconfigured['locations'] ?? [];
+$note = $preconfigured['note'] ?? '';
+$id = 'inkthread-decoration-' . (int)$product->getId();
+?>
+<fieldset class="fieldset inkthread-decoration" id="<?= $escaper->escapeHtmlAttr($id) ?>">
+    <legend class="legend"><span><?= $escaper->escapeHtml(__('Decoration')) ?></span></legend>
+
+    <div class="field">
+        <label class="label" for="<?= $escaper->escapeHtmlAttr($id) ?>-method">
+            <span><?= $escaper->escapeHtml(__('Decoration method')) ?></span>
+        </label>
+        <div class="control">
+            <select id="<?= $escaper->escapeHtmlAttr($id) ?>-method"
+                    name="<?= $escaper->escapeHtmlAttr($field) ?>[method]"
+                    data-role="decoration-method">
+                <?php foreach ($viewModel->getMethods() as $code => $label): ?>
+                    <option value="<?= $escaper->escapeHtmlAttr($code) ?>"
+                        <?= $code === $selectedMethod ? 'selected="selected"' : '' ?>>
+                        <?= $escaper->escapeHtml($label) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+
+    <div class="field inkthread-decoration-locations" data-role="decoration-locations">
+        <span class="label"><span><?= $escaper->escapeHtml(__('Print locations (up to 3)')) ?></span></span>
+        <div class="control">
+            <?php foreach ($viewModel->getLocations() as $code => $label): ?>
+                <?php $inputId = $id . '-location-' . $code; ?>
+                <div class="field choice">
+                    <input type="checkbox"
+                           class="checkbox"
+                           id="<?= $escaper->escapeHtmlAttr($inputId) ?>"
+                           name="<?= $escaper->escapeHtmlAttr($field) ?>[locations][]"
+                           value="<?= $escaper->escapeHtmlAttr($code) ?>"
+                           data-validate="{'validate-one-required-by-name':true}"
+                           data-msg-validate-one-required-by-name="<?=
+                                $escaper->escapeHtmlAttr(__('Please choose at least one print location.')) ?>"
+                           <?= in_array($code, $selectedLocations, true) ? 'checked="checked"' : '' ?>/>
+                    <label class="label" for="<?= $escaper->escapeHtmlAttr($inputId) ?>">
+                        <span><?= $escaper->escapeHtml($label) ?></span>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+            <div class="message notice inkthread-decoration-hint" data-role="decoration-hint" hidden></div>
+        </div>
+    </div>
+
+    <div class="field" data-role="decoration-note-field">
+        <label class="label" for="<?= $escaper->escapeHtmlAttr($id) ?>-note">
+            <span><?= $escaper->escapeHtml(__('Decoration note (optional)')) ?></span>
+        </label>
+        <div class="control">
+            <textarea id="<?= $escaper->escapeHtmlAttr($id) ?>-note"
+                      name="<?= $escaper->escapeHtmlAttr($field) ?>[note]"
+                      rows="2"
+                      maxlength="<?= (int)$viewModel->getMaxNoteLength() ?>"
+                      data-role="decoration-note"
+                      data-validate="{'inkthread-decoration-no-markup':true}"
+            ><?= $escaper->escapeHtml($note) ?></textarea>
+        </div>
+    </div>
+
+    <p class="note"><?= $escaper->escapeHtml(
+        __('The decoration fee is charged per unit and per location. Quantity discounts apply in the cart, '
+            . 'counting matching items of this product together.')
+    ) ?></p>
+</fieldset>
+<script type="text/x-magento-init">
+    {
+        "#<?= $escaper->escapeJs($id) ?>": {
+            "InkThread_DecorationPricing/js/decoration-options": <?= /* @noEscape */ $viewModel->getJsConfig() ?>
+        }
+    }
+</script>
