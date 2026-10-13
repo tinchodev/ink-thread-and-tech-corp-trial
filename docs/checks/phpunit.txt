@@ -32,7 +32,8 @@ Artwork Validator (InkThread\DecorationPricing\Test\Unit\Model\Artwork\ArtworkVa
 Breakdown Formatter (InkThread\DecorationPricing\Test\Unit\Model\BreakdownFormatter)
  ✔ Brief worked example breakdown
  ✔ Pooled tier and note are shown
- ✔ Location text and artwork are shown on the location line
+ ✔ Embroidery text is shown on the location line
+ ✔ Screen print artwork is shown on the location line
  ✔ Without fee only the selection is shown
 
 Price Table Parser (InkThread\DecorationPricing\Test\Unit\Model\Config\PriceTableParser)
@@ -105,6 +106,8 @@ Selection Factory (InkThread\DecorationPricing\Test\Unit\Model\SelectionFactory)
  ✔ Stored artwork outside storage is ignored with data set "other var dir"
  ✔ Stored artwork outside storage is ignored with data set "traversal"
  ✔ Stored artwork outside storage is ignored with data set "absolute"
+ ✔ Screen print ignores location texts
+ ✔ Embroidery ignores stored artwork
  ✔ Pricing key ignores location order and note
 
 Selection Validator (InkThread\DecorationPricing\Test\Unit\Model\SelectionValidator)
@@ -129,6 +132,10 @@ Selection Validator (InkThread\DecorationPricing\Test\Unit\Model\SelectionValida
  ✔ Note with other special characters is allowed
  ✔ Location text at limit is valid
  ✔ Location text rules
+ ✔ Complete embroidery and screen print pass
+ ✔ Embroidery requires text for each location
+ ✔ Screen print requires artwork for each location
+ ✔ Assert complete throws
  ✔ All broken rules are reported
  ✔ Assert valid throws with message
  ✔ Assert valid passes for valid selection
@@ -151,6 +158,6 @@ Tier Quantity Resolver (InkThread\DecorationPricing\Test\Unit\Model\TierQuantity
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+47=95"
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+48=96"
 
-Time: 00:00.130, Memory: 14.00 MB
+Time: 00:00.177, Memory: 14.00 MB
 
-OK (132 tests, 228 assertions)
+OK (139 tests, 238 assertions)

@@ -1,6 +1,6 @@
 // Browser QA for the product page decoration fieldset (guest, headless Chrome via the DevTools protocol, no deps).
 // Requires: Node 22+, google-chrome, sample data with the decoration flag on 24-MB01 (id 1) and MS09 (id 478).
-// Usage: QA_OUT=docs/screenshots node docs/qa/browser/pdp-test.mjs
+// Usage: node docs/qa/browser/pdp-test.mjs   (documentation screenshots: screenshots.mjs)
 import { launch } from './cdp.mjs';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -10,8 +10,10 @@ import { tmpdir } from 'node:os';
 const FIXTURES = mkdtempSync(join(process.env.QA_TMP || tmpdir(), 'artwork-'));
 const PNG = join(FIXTURES, 'logo.png');
 const SVG = join(FIXTURES, 'logo.svg');
+const PDF = join(FIXTURES, 'back.pdf');
 writeFileSync(PNG, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
 writeFileSync(SVG, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+writeFileSync(PDF, '%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
 
 const BASE = 'https://magento.test';
 const OUT = process.env.QA_OUT || '.';
@@ -46,6 +48,10 @@ const helpers = (pid) => `
                 s.banners = root.find('.message:visible').length;
                 s.detailRows = root.find('[data-role=decoration-detail]:visible').map(function () {
                     return this.getAttribute('data-location');
+                }).get();
+                s.parts = root.find('[data-role^=decoration-detail-]:visible').map(function () {
+                    return $(this).closest('[data-role=decoration-detail]').attr('data-location') + ':'
+                        + this.getAttribute('data-role').replace('decoration-detail-', '');
                 }).get();
                 s.noteDisabled = root.find('[data-role=decoration-note]').prop('disabled');
                 s.errors = root.find('.mage-error:visible').map(function () { return $(this).text(); }).get();
@@ -88,7 +94,6 @@ await b.evaluate(`__d.click('left_chest'); __d.click('sleeve')`);
 s = await state();
 check('A4 Three checked: remaining location disabled, no extra message',
     s.checked.length === 3 && s.disabled.right_chest && !s.reasons.right_chest && s.banners === 0, JSON.stringify(s.reasons));
-await b.screenshot(`${OUT}/pdp-embroidery-three-locations.png`);
 
 await b.evaluate(`__d.click('upper_back'); __d.click('left_chest'); __d.click('sleeve'); __d.method('screen_print')`);
 s = await state();
@@ -100,7 +105,12 @@ let items = await cart();
 check('A6 Submit with method but no location: client error, nothing added',
     s.errors.some((e) => /at least one print location/.test(e)) && items.length === 0, JSON.stringify(s.errors));
 
+const file = (loc, path) => b.setFiles(`#inkthread-decoration-${pid}-details-${loc}-file`, [path]);
+const text = (loc, value) => b.evaluate(`require('jquery')('#inkthread-decoration-${pid}-details-${loc}-text').val(${JSON.stringify(value)}); true`);
+let pid = 1;
+
 await b.evaluate(`__d.click('full_back'); __d.note('size < 10cm'); document.getElementById('qty').value = 12; true`);
+await file('full_back', PNG);
 await submit();
 s = await state();
 items = await cart();
@@ -111,53 +121,77 @@ await b.evaluate(`__d.note('Logo v2 & "white"'); true`);
 await submit();
 items = await cart();
 const bag = items.find((i) => i.sku === '24-MB01');
-check('A8 Valid submit: added at $34 + $4.00 (screen print full back, 12 units)',
+check('A8 Valid submit: added at $34 + $4.00 (screen print full back + artwork, 12 units)',
     bag && bag.qty === 12 && Math.abs(bag.price - 38) < 0.001, JSON.stringify(bag));
 
 await b.evaluate(`__d.method('none')`);
 s = await state();
 check('A9 Back to None: locations cleared and disabled', s.checked.length === 0 && Object.values(s.disabled).every(Boolean));
 
-// ---- A10-A12. Per-location text and artwork (extension) ----
-await b.evaluate(`__d.method('embroidery'); __d.click('left_chest'); __d.click('full_back'); true`);
+// ---- A10-A14. Required per-location details: text for embroidery, artwork for screen print ----
+await b.evaluate(`__d.method('embroidery'); __d.click('left_chest'); __d.click('full_back'); __d.note(''); true`);
 s = await state();
-check('A10 Detail rows shown only for checked locations', JSON.stringify(s.detailRows) === '["left_chest","full_back"]',
-    JSON.stringify(s.detailRows));
+check('A10 Embroidery: only the text field per checked location',
+    JSON.stringify(s.parts) === '["left_chest:text","full_back:text"]', JSON.stringify(s.parts));
 
-await b.setFiles('#inkthread-decoration-1-details-left_chest-file', [SVG]);
 await submit();
 s = await state();
 items = await cart();
-check('A11 SVG artwork: client error, nothing new added',
-    s.errors.some((e) => /PNG, JPG or PDF/.test(e)) && items.length === 1, JSON.stringify(s.errors));
+check('A11 Embroidery without texts: required errors, nothing new added',
+    s.errors.filter((e) => /required/i.test(e)).length === 2 && items.length === 1, JSON.stringify(s.errors));
 
-await b.setFiles('#inkthread-decoration-1-details-left_chest-file', [PNG]);
-await b.evaluate(`require('jquery')('#inkthread-decoration-1-details-left_chest-text').val('ACME');
-    require('jquery')('#inkthread-decoration-1-details-full_back-text').val('TEAM 2026');
-    require('jquery')('#inkthread-decoration-1 [data-role=decoration-note]').val(''); document.getElementById('qty').value = 3; true`);
+await b.evaluate(`__d.method('screen_print'); true`);
+s = await state();
+check('A12 Switch to screen print: only the artwork field per checked location',
+    JSON.stringify(s.parts) === '["left_chest:artwork","full_back:artwork"]', JSON.stringify(s.parts));
+
+await file('left_chest', SVG);
+// The AJAX add keeps A7's file selected; clear it (setFileInputFiles with [] does not).
+await b.evaluate(`document.getElementById('inkthread-decoration-1-details-full_back-file').value = ''; true`);
+await submit();
+s = await state();
+items = await cart();
+check('A13 Screen print: SVG and a missing file are refused client-side, nothing new added',
+    s.errors.some((e) => /PNG, JPG or PDF/.test(e)) && s.errors.some((e) => /upload the artwork/.test(e))
+        && items.length === 1, JSON.stringify(s.errors));
+
+await file('left_chest', PNG);
+await file('full_back', PDF);
+await b.evaluate(`document.getElementById('qty').value = 3; true`);
 await submit();
 items = await cart();
-const art = items.find((i) => i.options.some((o) => /Artwork: logo\.png/.test(o)));
-check('A12 Upload through the real form: text + artwork on the cart line',
-    art && art.options.some((o) => o === 'Left chest: $4.00 / unit · Text: "ACME" · Artwork: logo.png')
-        && art.options.some((o) => o === 'Full back: $7.50 / unit · Text: "TEAM 2026"'), JSON.stringify(art));
-await b.evaluate(`document.getElementById('inkthread-decoration-1').scrollIntoView({block: 'center'}); true`);
-await b.screenshot(`${OUT}/pdp-location-text-artwork.png`);
+const art = items.find((i) => i.options.some((o) => /Artwork: back\.pdf/.test(o)));
+check('A14 Screen print upload through the real form: artwork per location on the cart line',
+    art && art.options.includes('Left chest: $2.00 / unit · Artwork: logo.png')
+        && art.options.includes('Full back: $4.00 / unit · Artwork: back.pdf'), JSON.stringify(art));
+
+await b.evaluate(`__d.method('embroidery'); true`);
+await text('left_chest', 'ACME');
+await text('full_back', 'TEAM 2026');
+await submit();
+items = await cart();
+const emb = items.find((i) => i.options.some((o) => /Text: "TEAM 2026"/.test(o)));
+check('A15 Embroidery with texts: text per location on the cart line, no artwork',
+    emb && emb.options.includes('Left chest: $4.00 / unit · Text: "ACME"')
+        && emb.options.includes('Full back: $7.50 / unit · Text: "TEAM 2026"')
+        && !emb.options.some((o) => /Artwork/.test(o)), JSON.stringify(emb));
 
 // ---- B. Configurable product: Ryker Tee (id 478, $32), Black / M ----
 await b.goto(`${BASE}/ryker-lumatech-trade-tee-crew-neck.html`);
 await b.waitFor(`window.require && require.defined && require.defined('jquery') && !!document.querySelector('.swatch-option[data-option-id="168"]')`);
 await b.evaluate(helpers(478));
 await b.waitFor('__d.ready()');
+pid = 478;
 await b.evaluate(`document.querySelector('.swatch-option[data-option-id="49"]').click();
     document.querySelector('.swatch-option[data-option-id="168"]').click();
     __d.method('embroidery'); __d.click('left_chest'); __d.click('sleeve');
     document.getElementById('qty').value = 6; true`);
-await b.screenshot(`${OUT}/pdp-configurable-decorated.png`);
+await text('left_chest', 'ACME');
+await text('sleeve', '2026');
 await submit();
 items = await cart();
 const tee = items.find((i) => i.sku === 'MS09-M-Black');
-check('B1 Configurable Black/M x6 embroidery L chest + sleeve: $32 + $7.50',
+check('B1 Configurable Black/M x6 embroidery L chest + sleeve with texts: $32 + $7.50',
     tee && tee.qty === 6 && Math.abs(tee.price - 39.5) < 0.001, JSON.stringify(tee));
 
 // ---- C. Cart and checkout pages render the breakdown ----
@@ -165,9 +199,9 @@ await b.goto(`${BASE}/checkout/cart/`);
 const cartText = await b.evaluate(`document.querySelector('#shopping-cart-table').innerText`);
 const decoratedLines = (await cart()).filter((i) => i.options.some((o) => /^Decoration fee/.test(o))).length;
 check(`C1 Cart page shows the breakdown for every decorated line (${decoratedLines})`,
-    decoratedLines === 3 && (cartText.match(/Decoration fee/g) || []).length === decoratedLines
-        && /Decoration note\s*Logo v2 & "white"/.test(cartText) && /Text: "ACME" · Artwork: logo\.png/.test(cartText));
-await b.screenshot(`${OUT}/cart-breakdown.png`);
+    decoratedLines === 4 && (cartText.match(/Decoration fee/g) || []).length === decoratedLines
+        && /Decoration note\s*Logo v2 & "white"/.test(cartText) && /Artwork: back\.pdf/.test(cartText)
+        && /Text: "TEAM 2026"/.test(cartText));
 
 await b.goto(`${BASE}/checkout/`, `!!document.querySelector('.opc-block-summary .items-in-cart')`);
 await b.evaluate(`document.querySelector('.opc-block-summary .items-in-cart .title').click(); true`);
@@ -176,7 +210,6 @@ await b.evaluate(`document.querySelectorAll('.opc-block-summary .product-item .o
 await b.sleep(500);
 const summary = await b.evaluate(`document.querySelector('.opc-block-summary').innerText`);
 check('C2 Checkout summary shows decoration lines', /Decoration fee/.test(summary) && /Screen print/.test(summary), summary.replace(/\s+/g, ' ').slice(0, 300));
-await b.screenshot(`${OUT}/checkout-summary.png`);
 
 // ---- D. Console / CSP ----
 const csp = await b.evaluate('window.__csp || []');

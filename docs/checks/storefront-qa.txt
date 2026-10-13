@@ -16,12 +16,12 @@ PASS  fee line
 PASS  unit 34 + 1.50 + 1.50
 == S6 pooled tier: 6 S + 6 M of one tee, same decoration (client Q1)
 PASS  S line at 12+ tier
-PASS  M line at 12+ tier (location order and note do not split the pool)
+PASS  M line at 12+ tier (location order, texts and note do not split the pool)
 PASS  pooled tier shown
 PASS  M -> 5: S line drops to 1-11 tier
 PASS  M -> 5: M line drops to 1-11 tier
 PASS  S removed: M alone at 6 re-tiers
-== S7 invalid requests are rejected server-side (nothing added)
+== S7 invalid requests are rejected server-side (nothing added; required details supplied, so only the named rule fails)
 PASS  method without location
 PASS  4 locations
 PASS  upper back + full back
@@ -30,26 +30,36 @@ PASS  note of 256 chars
 PASS  note with markup
 PASS  decoration on unflagged product
 PASS  unflagged product without decoration still adds
-== S8 edit cart item: prefill, re-price, re-validate
-PASS  edit page preselects method
-PASS  edit page prechecks 2 locations
-PASS  edited to screen print full back: 32 + 4.00
-PASS  invalid edit rejected, line unchanged
-== S9 per-location text and artwork uploads (multipart, as the AJAX form posts)
-PASS  left chest text + PNG on the location line
+== S8 required per-location details (Martin's decision)
+PASS  embroidery location without text
+PASS  embroidery: text for one of two locations
+PASS  embroidery: an upload does not replace the text
+PASS  screen print location without artwork
+PASS  screen print: artwork for one of two locations
+PASS  screen print: text does not replace the artwork
+PASS  embroidery keeps its text
+PASS  embroidery ignores an uploaded file
+PASS  screen print keeps its artwork
+PASS  screen print ignores posted text
+== S9 artwork uploads (multipart, as the AJAX form posts)
+PASS  left chest PNG on the location line
 PASS  full back PDF on the location line
-PASS  unselected location's text/upload ignored
-PASS  fee unaffected by text/artwork: 34 + 3.25 + 6.50
+PASS  upload for an unselected location ignored
+PASS  fee unaffected by artwork: 34 + 2.00 + 4.00
 PASS  artwork rejected: SVG
 PASS  artwork rejected: HTML renamed .png
 PASS  artwork rejected: over 10 MB
-PASS  location text over 100 chars rejected
-PASS  location text with < > rejected
-== S10 edit: keep artwork via token, forged token ignored, remove
+PASS  embroidery text over 100 chars
+PASS  embroidery text with < >
+== S10 edit cart item: prefill, re-price, keep / replace artwork, re-validate
+PASS  edit page preselects method
+PASS  edit page prechecks 2 locations
+PASS  edit page prefills the text
+PASS  edited to screen print full back: 32 + 4.00
 PASS  edit page offers the current artwork
-PASS  text changed, artwork kept
-PASS  forged token ignored
-PASS  new upload replaces
-PASS  remove drops the artwork
+PASS  edit without re-upload keeps the artwork
+PASS  new upload replaces the artwork
+PASS  forged token: edit rejected (artwork required), line unchanged
+PASS  invalid edit (back conflict) rejected, line unchanged
 
-42 passed, 0 failed
+52 passed, 0 failed

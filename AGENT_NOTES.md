@@ -55,6 +55,19 @@
    - Luma only sets `multipart/form-data` on the add-to-cart form for products with native file options. The AJAX
      submit didn't need it, but a non-AJAX submit would have silently dropped files. The widget now sets it.
 
+9. **Built "text and artwork on every location, for both methods" without asking which goes with which.**
+   Martin had asked about per-location text (for embroidery) and an image upload (for screen print). The agent
+   generalised to both fields everywhere, optional. *Caught by Martin* when he wrote his decisions into the plan.
+   Fixed to: embroidery requires text per location, screen print requires artwork per location, only that field
+   shown (`c511ba4`, `648bfda`, and the code commit after them).
+
+10. **Test-side slips while making the fields required** (caught by the agent): the browser test assumed the AJAX
+    add-to-cart clears the form (it doesn't, so a file from an earlier step was still selected). It also assumed
+    `DOM.setFileInputFiles` with an empty list clears an input (it doesn't). The client-side "file required" rule was
+    first a custom validator; it was switched to the native `required` attribute, which jQuery Validate always
+    evaluates on empty fields. The test bug was found first, so it's unproven whether the custom rule alone would
+    have failed.
+
 ## Where the agent went beyond the requirement
 
 Kept, but worth a reviewer's judgement:
