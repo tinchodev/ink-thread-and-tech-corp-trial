@@ -32,11 +32,88 @@ bin/magento setup:static-content:deploy -f en_US               # production mode
 bin/magento cache:flush
 ```
 
-3. **Flag products:** Catalog > Products > select products > Actions > Update attributes > **Allow Decoration = Yes**.
-   For configurable products, set it on the parent. Only flagged products show the options.
-4. **Prices:** Stores > Configuration > Catalog > **Decoration Pricing**. The brief's tables ship as defaults.
+Then flag the products that can be decorated (see Usage). The brief's price tables ship as defaults, so nothing else
+is required. The attribute patch is revertable (`bin/magento module:uninstall` for a composer install removes it).
 
-The attribute patch is revertable (`bin/magento module:uninstall` for a composer install removes it).
+## Usage
+
+### 1. Admin: choose which products can be decorated
+
+Only products with **Allow Decoration = Yes** show the decoration options. The default is No.
+
+* **One product:** Catalog > Products > edit the product > **Decoration** section > **Allow Decoration** = Yes > Save.
+* **Several at once:** Catalog > Products > tick the products > Actions > **Update attributes** > **Allow Decoration** =
+  Yes > Save.
+* **Configurable products:** set it on the **parent** (e.g. the hoodie), not on the size/colour children.
+
+### 2. Admin: set the prices
+
+Stores > Configuration > Catalog > **Decoration Pricing** > *Per-unit Price by Print Location* has one table per method
+(**Embroidery**, **Screen Print**). Each row is one tier: *Print location*, *From quantity*, *Unit price* (base
+currency). A row's price applies from its quantity up to the next row's quantity for the same location. Example
+(shipped default, Embroidery, Left chest):
+
+| Print location | From quantity | Unit price | Applies to |
+|---|---|---|---|
+| Left chest | 1 | 4.00 | 1–11 units |
+| Left chest | 12 | 3.25 | 12–47 units |
+| Left chest | 48 | 2.50 | 48+ units |
+
+* A location with **no rows** for a method can't be chosen with that method (it's greyed out on the product page).
+* If a location's first row starts above 1 (e.g. 12), it works as a minimum order. Adding fewer units is refused with
+  "Embroidery on Sleeve requires a minimum quantity of 12." If a cart line drops below it later (qty change), the line
+  shows that error and the order can't be placed until it's fixed. It is never charged without the fee.
+* Invalid rows (unknown location, quantity below 1, negative price, duplicate tier) are rejected on save with the row
+  number.
+* **Use system value** restores the shipped defaults. After any save, open carts are re-priced on their next load.
+
+### 3. Storefront: how a customer orders a decoration
+
+On a flagged product page, the **Decoration** block sits above *Qty / Add to Cart*:
+
+1. **Decoration method:** None (default, no fee), **Embroidery** or **Screen Print**.
+2. **Print locations (up to 3):** Left chest, Right chest, Sleeve, Upper back, Full back. Unavailable choices are greyed
+   out with the reason next to them, e.g. "Full back (not with Upper back)". After 3 locations the rest are greyed out.
+3. **Per-location detail (required)**, one field per selected location:
+   * Embroidery: **text to embroider** (up to 100 characters).
+   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB).
+4. **Decoration note (optional)**, up to 255 characters, for anything that isn't location-specific (e.g. thread colour).
+5. Choose size/colour if needed, set **Qty** and **Add to Cart**.
+
+Text and notes can't contain `<` or `>`. Every rule is also checked on the server, so a crafted request can't get
+around it.
+
+### 4. Cart and checkout
+
+* Each decorated line shows a breakdown: method, each location with its unit price (plus its text or artwork name),
+  `Decoration fee: $6.00 / unit × 12 = $72.00`, and the note.
+* The unit price shown is product price + decoration fee, so tax and %-off cart rules apply to both.
+* **Quantity tiers count matching lines together:** same product + same method + same set of locations. For example,
+  6 × M + 6 × L of the same hoodie with the same embroidery locations are both priced at the 12+ tier, and the line
+  says "(tier for 12 matching units)". Changing or removing one of those lines re-prices the others. Different texts,
+  artwork or notes don't split the group; different products never share a tier.
+* **Edit** (pencil icon) reopens the product page with the decoration filled in. For Screen Print the current file is
+  kept unless a new one is uploaded.
+* The same breakdown appears in the minicart and the checkout order summary.
+
+### 5. Orders
+
+* **Admin** (Sales > Orders > view): each item shows the frozen breakdown. A **Decoration Artwork** table (Information
+  tab, above *Items Ordered*) lists every uploaded file per item and location; the file name downloads it.
+  Downloading needs the *Sales > Operations > Orders > Actions > View* permission.
+* **Customer:** the breakdown appears in My Account > My Orders, guest order lookup, and the confirmation email.
+  Invoices, credit memos and invoice PDFs show it too.
+* The order keeps the prices it was placed with: later price-table changes don't alter it.
+
+### Try it with sample data
+
+With Luma sample data, flag the **Chaz Kangeroo Hoodie** (MH01) and open it on the storefront. Remember the required
+detail per location: a text for Embroidery, a PNG/JPG/PDF for Screen Print. Then:
+
+* Embroidery, Left chest + Sleeve, qty 12 → fee ($3.25 + $2.75) × 12 = **$72.00** (brief worked example 1).
+* Screen Print, Full back, qty 100 → fee $2.50 × 100 = **$250.00** (brief worked example 2; sample data stocks 100
+  per size/colour).
+* Embroidery, 6 × M + 6 × L, same locations → both lines at the 12+ tier.
 
 ## How pricing works
 
