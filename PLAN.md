@@ -245,3 +245,26 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 - Bundle products (simple + configurable + grouped children only).
 - Live fee preview on the product page (not required. Would duplicate pricing logic in JS or need an endpoint).
 - Integration/MFTF tests (unit + scripted manual QA instead, timebox).
+
+## 10. Extension after step 6: text and artwork per location (requested by Martin, beyond the brief)
+
+Requested after the core build was done, as extra effort within the time cap. Decisions: the general note stays; each
+selected location also gets **optional text (≤ 100 chars, no `<` `>`)** and an **optional artwork file (PNG, JPG or
+PDF, ≤ 10 MB)**. Neither changes the fee, and neither splits a tier pool (same rule as the note).
+
+- **Data:** `Selection` gains per-location `text` and `artwork` (`ArtworkFile`: stored path, sanitised original name,
+  size, MIME type). It is stored in the same quote item option and order snapshot.
+- **Upload:** flat file inputs `inkthread_artwork_<location>` posted with the add-to-cart form (Luma already posts
+  `FormData`). The capture observer validates (`is_uploaded_file`, extension + real MIME via finfo, size) and stores
+  under `var/inkthread_decoration/artwork/` with a random name. That is outside the web root, so never served
+  directly.
+- **Keep on edit / reorder:** a stored file is referenced by an **encrypted token** (Magento encryptor, authenticated).
+  It is written back into the buy request, so cart edit and reorder keep the file without re-upload, and a client
+  can't point at an arbitrary path. Edit offers "remove".
+- **Display:** the breakdown line per location adds the text and the artwork file name (cart, checkout, orders,
+  emails).
+- **Admin:** an "Decoration artwork" block on the order view lists files per item/location with a download link.
+  The download goes through an admin controller (ACL `Magento_Sales::actions_view`), served as an attachment.
+- **Tests:** unit tests for parsing/validation of per-location text, artwork validation, token tamper rejection and
+  formatter output. The storefront QA script gets multipart uploads, and the browser QA gets file inputs.
+- **Not included:** customer-side download link, cleanup of files from abandoned carts (cron), remote storage (S3).
