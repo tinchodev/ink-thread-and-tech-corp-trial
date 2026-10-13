@@ -252,10 +252,11 @@ Added after the core build, as extra effort within the time cap. **Planning deci
 
 | Decision | Choice |
 |---|---|
-| Embroidery | Each selected location gets its own **optional text to embroider** (≤ 100 chars, no `<` `>`). No artwork upload. |
-| Screen print | Each selected location gets its own **optional artwork upload** (PNG, JPG or PDF, ≤ 10 MB). No per-location text. |
+| Embroidery | Each selected location **requires** its own **text to embroider** (≤ 100 chars, no `<` `>`). No artwork upload. |
+| Screen print | Each selected location **requires** its own **artwork upload** (PNG, JPG or PDF, ≤ 10 MB). No per-location text. On cart edit the current file counts, so it is replaced, not removed. |
 | General decoration note | **Kept for both methods** (≤ 255 chars), for instructions that aren't location-specific. |
 | Pricing | Text and artwork **don't change the fee** and **don't split a tier pool** (same rule as the note). |
+| Product page | Only the field for the chosen method is shown (text for embroidery, file for screen print), one per selected location, marked required. |
 | Mismatched input | Text posted for screen print, or a file posted for embroidery, is **ignored** (the form never sends it; a crafted request gains nothing). This follows the existing rule that method None drops locations and note. |
 
 - **Data:** `Selection` gains per-location `text` and `artwork` (`ArtworkFile`: stored path, sanitised original name,
@@ -266,7 +267,7 @@ Added after the core build, as extra effort within the time cap. **Planning deci
   directly.
 - **Keep on edit / reorder:** a stored file is referenced by an **encrypted token** (Magento encryptor, authenticated).
   It is written back into the buy request, so cart edit and reorder keep the file without re-upload, and a client
-  can't point at an arbitrary path. Edit offers "remove".
+  can't point at an arbitrary path. Edit allows replacing the file (no remove: artwork is required).
 - **Display:** the breakdown line per location adds the embroidery text or the artwork file name (cart, checkout,
   orders, emails).
 - **Product page:** a details row per checked location shows the text input for embroidery, or the file input for
