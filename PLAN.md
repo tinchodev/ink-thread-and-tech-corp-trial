@@ -75,7 +75,8 @@ Observer on `catalog_product_type_prepare_full_options` (and `_lite_` for admin/
 - Custom backend model validates on save: price ≥ 0, min qty ≥ 1 integer, no duplicate (location, min qty).
 - **Fail closed:** if a selected location has no tier covering the qty, add-to-cart is rejected
   ("Decoration pricing is not configured for …"). It is never silently charged $0.
-- Scope: default + website. Prices are in **base currency**, and Magento converts for display as with any price.
+- Scope: **default (global) only**. The trial is a single store (client answer Q6). Prices are in base currency.
+  Website scope can be enabled later by adding `showInWebsite` and reading config with the website scope (noted in the README).
 - Methods and locations are fixed lists (source models). They are injectable via `di.xml` arguments,
   so a project can extend them without editing the module.
 
@@ -229,7 +230,7 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 3. ~~**Which products**~~ **Answered:** only products with the decoration flag (§2.6).
 4. **Note**: required, max length, only when a method is chosen? *(Default: optional, 255 chars, ignored for None.)*
 5. **Left + Right chest** together is allowed and charged twice? *(Default: yes.)*
-6. **Scope**: is global/website-level pricing enough, or are per-store prices needed? Multi-currency?
+6. ~~**Scope**~~ **Answered:** single store for the trial → one global price table, base currency only.
 7. ~~**Frontend**~~ **Answered:** Luma only for now. Hyvä/headless out of scope.
    REST/GraphQL add-to-cart with decorations stays out of scope (listed as unfinished).
 
