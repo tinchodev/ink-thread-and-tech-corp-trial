@@ -6,12 +6,12 @@
 [![PHP-CS-Fixer](https://img.shields.io/badge/code%20style-PHP--CS--Fixer-46a2f1.svg?style=flat-square)](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer)
 [![PHPUnit 9.6](https://img.shields.io/badge/PHPUnit-9.6-3c9cd7.svg?style=flat-square)](https://phpunit.de/)
 
-Lets a customer choose a decoration method (None / Embroidery / Screen print), 1–3 print locations and an optional
+Lets a customer choose a decoration method (None / Embroidery / Screen Print), 1–3 print locations and an optional
 note on a product, and prices the decoration per unit by method, location and quantity tier. Prices are set in admin.
 The decoration and a per-location breakdown carry from cart to checkout to the placed order.
 
 **Beyond the brief (requested extension, PLAN.md §10):** with **Embroidery**, each selected location **requires** its
-own text to embroider (≤ 100 chars). With **Screen print**, each selected location **requires** an artwork file (PNG,
+own text to embroider (≤ 100 chars). With **Screen Print**, each selected location **requires** an artwork file (PNG,
 JPG or PDF, ≤ 10 MB). Only the chosen method's field is shown. The general note stays for both methods. Neither
 changes the fee. Artwork files are listed per item/location with a download link on the admin order view.
 
@@ -53,7 +53,7 @@ The attribute patch is revertable (`bin/magento module:uninstall` for a composer
   refused (or the line gets an error that blocks checkout). It is never charged $0.
 
 Brief worked examples, verified in unit tests and on the storefront: Embroidery, 12 units, Left chest + Sleeve =
-($3.25 + $2.75) × 12 = **$72.00**. Screen print, 100 units, Full back = $2.50 × 100 = **$250.00**.
+($3.25 + $2.75) × 12 = **$72.00**. Screen Print, 100 units, Full back = $2.50 × 100 = **$250.00**.
 
 ## Design choices
 

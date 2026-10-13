@@ -15,7 +15,7 @@
                     <backend_model>InkThread\DecorationPricing\Model\Config\Backend\PriceTable</backend_model>
                 </field>
                 <field id="screen_print" translate="label" sortOrder="20" showInDefault="1">
-                    <label>Screen print</label>
+                    <label>Screen Print</label>
                     <frontend_model>InkThread\DecorationPricing\Block\Adminhtml\Form\Field\PriceTable</frontend_model>
                     <backend_model>InkThread\DecorationPricing\Model\Config\Backend\PriceTable</backend_model>
                 </field>

@@ -39,7 +39,7 @@ class DecorationMethod implements OptionSourceInterface
         return [
             self::NONE => (string)__('None'),
             self::EMBROIDERY => (string)__('Embroidery'),
-            self::SCREEN_PRINT => (string)__('Screen print'),
+            self::SCREEN_PRINT => (string)__('Screen Print'),
         ];
     }
 

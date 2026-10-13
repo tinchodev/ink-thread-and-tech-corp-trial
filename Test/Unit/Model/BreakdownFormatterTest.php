@@ -125,7 +125,7 @@ class BreakdownFormatterTest extends TestCase
         );
 
         $this->assertSame(
-            [['label' => 'Decoration', 'value' => 'Screen print: Left chest, Full back']],
+            [['label' => 'Decoration', 'value' => 'Screen Print: Left chest, Full back']],
             $this->breakdownFormatter->format($selection)
         );
     }

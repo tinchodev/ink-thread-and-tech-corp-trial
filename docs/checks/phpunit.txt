@@ -158,6 +158,6 @@ Tier Quantity Resolver (InkThread\DecorationPricing\Test\Unit\Model\TierQuantity
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+47=95"
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+48=96"
 
-Time: 00:00.177, Memory: 14.00 MB
+Time: 00:00.151, Memory: 14.00 MB
 
 OK (139 tests, 238 assertions)

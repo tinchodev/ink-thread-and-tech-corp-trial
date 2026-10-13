@@ -59,7 +59,7 @@ await addToCart();
 await pick(COLOR.black, SIZE.l, 6);
 await addToCart(); // same decoration on another size: pooled into the 12+ tier
 
-// 2. Screen print: artwork per location.
+// 2. Screen Print: artwork per location.
 await openHoodie();
 await pick(COLOR.gray, SIZE.l, 12);
 await decorate('screen_print', ['left_chest', 'full_back']);

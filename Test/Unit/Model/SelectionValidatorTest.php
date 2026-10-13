@@ -292,7 +292,7 @@ class SelectionValidatorTest extends TestCase
     public function testAssertValidThrowsWithMessage(): void
     {
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Please choose at least one print location for Screen print.');
+        $this->expectExceptionMessage('Please choose at least one print location for Screen Print.');
 
         $this->selectionValidator->assertValid(new Selection(DecorationMethod::SCREEN_PRINT, [], ''));
     }

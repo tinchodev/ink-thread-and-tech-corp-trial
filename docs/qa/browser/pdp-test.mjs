@@ -151,7 +151,7 @@ await b.evaluate(`document.getElementById('inkthread-decoration-1-details-full_b
 await submit();
 s = await state();
 items = await cart();
-check('A13 Screen print: SVG and a missing file are refused client-side, nothing new added',
+check('A13 Screen Print: SVG and a missing file are refused client-side, nothing new added',
     s.errors.some((e) => /PNG, JPG or PDF/.test(e)) && s.errors.some((e) => /upload the artwork/.test(e))
         && items.length === 1, JSON.stringify(s.errors));
 
@@ -161,7 +161,7 @@ await b.evaluate(`document.getElementById('qty').value = 3; true`);
 await submit();
 items = await cart();
 const art = items.find((i) => i.options.some((o) => /Artwork: back\.pdf/.test(o)));
-check('A14 Screen print upload through the real form: artwork per location on the cart line',
+check('A14 Screen Print upload through the real form: artwork per location on the cart line',
     art && art.options.includes('Left chest: $2.00 / unit · Artwork: logo.png')
         && art.options.includes('Full back: $4.00 / unit · Artwork: back.pdf'), JSON.stringify(art));
 
@@ -209,7 +209,7 @@ await b.waitFor(`!!document.querySelector('.opc-block-summary .product-item .ite
 await b.evaluate(`document.querySelectorAll('.opc-block-summary .product-item .options .toggle').forEach(t => t.click()); true`);
 await b.sleep(500);
 const summary = await b.evaluate(`document.querySelector('.opc-block-summary').innerText`);
-check('C2 Checkout summary shows decoration lines', /Decoration fee/.test(summary) && /Screen print/.test(summary), summary.replace(/\s+/g, ' ').slice(0, 300));
+check('C2 Checkout summary shows decoration lines', /Decoration fee/.test(summary) && /Screen Print/.test(summary), summary.replace(/\s+/g, ' ').slice(0, 300));
 
 // ---- D. Console / CSP ----
 const csp = await b.evaluate('window.__csp || []');

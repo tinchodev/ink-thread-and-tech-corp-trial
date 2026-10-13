@@ -223,7 +223,7 @@ class FeeCalculatorTest extends TestCase
         ]));
 
         $this->expectException(PricingNotConfiguredException::class);
-        $this->expectExceptionMessage('Full back is not available for Screen print.');
+        $this->expectExceptionMessage('Full back is not available for Screen Print.');
 
         $feeCalculator->assertOffered(
             new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::SLEEVE, PrintLocation::FULL_BACK], '')

@@ -6,17 +6,17 @@ PASS  A4 Three checked: remaining location disabled, no extra message  -- {"full
 PASS  A5 Unchecked all: Full back enabled again, no reasons
 PASS  A6 Submit with method but no location: client error, nothing added  -- ["","Please choose at least one print location."]
 PASS  A7 Note with "<": client error, nothing added  -- ["","The decoration note cannot contain the characters < or >."]
-PASS  A8 Valid submit: added at $34 + $4.00 (screen print full back + artwork, 12 units)  -- {"sku":"24-MB01","qty":12,"price":38,"options":["Decoration: Screen print","Full back: $4.00 / unit · Artwork: logo.png","Decoration fee: $4.00 / unit × 12 = $48.00","Decoration note: Logo v2 & \"white\""]}
+PASS  A8 Valid submit: added at $34 + $4.00 (screen print full back + artwork, 12 units)  -- {"sku":"24-MB01","qty":12,"price":38,"options":["Decoration: Screen Print","Full back: $4.00 / unit · Artwork: logo.png","Decoration fee: $4.00 / unit × 12 = $48.00","Decoration note: Logo v2 & \"white\""]}
 PASS  A9 Back to None: locations cleared and disabled
 PASS  A10 Embroidery: only the text field per checked location  -- ["left_chest:text","full_back:text"]
 PASS  A11 Embroidery without texts: required errors, nothing new added  -- ["","This is a required field.","","This is a required field."]
 PASS  A12 Switch to screen print: only the artwork field per checked location  -- ["left_chest:artwork","full_back:artwork"]
-PASS  A13 Screen print: SVG and a missing file are refused client-side, nothing new added  -- ["","Artwork must be a PNG, JPG or PDF file of at most 10 MB.","","Please upload the artwork for this location."]
-PASS  A14 Screen print upload through the real form: artwork per location on the cart line  -- {"sku":"24-MB01","qty":3,"price":40,"options":["Decoration: Screen print","Left chest: $2.00 / unit · Artwork: logo.png","Full back: $4.00 / unit · Artwork: back.pdf","Decoration fee: $6.00 / unit × 3 = $18.00"]}
+PASS  A13 Screen Print: SVG and a missing file are refused client-side, nothing new added  -- ["","Artwork must be a PNG, JPG or PDF file of at most 10 MB.","","Please upload the artwork for this location."]
+PASS  A14 Screen Print upload through the real form: artwork per location on the cart line  -- {"sku":"24-MB01","qty":3,"price":40,"options":["Decoration: Screen Print","Left chest: $2.00 / unit · Artwork: logo.png","Full back: $4.00 / unit · Artwork: back.pdf","Decoration fee: $6.00 / unit × 3 = $18.00"]}
 PASS  A15 Embroidery with texts: text per location on the cart line, no artwork  -- {"sku":"24-MB01","qty":3,"price":45.5,"options":["Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Full back: $7.50 / unit · Text: \"TEAM 2026\"","Decoration fee: $11.50 / unit × 3 = $34.50"]}
 PASS  B1 Configurable Black/M x6 embroidery L chest + sleeve with texts: $32 + $7.50  -- {"sku":"MS09-M-Black","qty":6,"price":39.5,"options":["Size: M","Color: Black","Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Sleeve: $3.50 / unit · Text: \"2026\"","Decoration fee: $7.50 / unit × 6 = $45.00"]}
 PASS  C1 Cart page shows the breakdown for every decorated line (4)
-PASS  C2 Checkout summary shows decoration lines  -- Order Summary 24 Items in Cart Joust Duffle Bag Qty12 $456.00 View Details Decoration Screen print Full back $4.00 / unit · Artwork: logo.png Decoration fee $4.00 / unit × 12 = $48.00 Decoration note Logo v2 & "white" Joust Duffle Bag Qty3 $120.00 View Details Decoration Screen print Left chest $2.0
+PASS  C2 Checkout summary shows decoration lines  -- Order Summary 24 Items in Cart Joust Duffle Bag Qty12 $456.00 View Details Decoration Screen Print Full back $4.00 / unit · Artwork: logo.png Decoration fee $4.00 / unit × 12 = $48.00 Decoration note Logo v2 & "white" Joust Duffle Bag Qty3 $120.00 View Details Decoration Screen Print Left chest $2.0
 PASS  D1 No console errors from the module
 INFO  all console errors on visited pages: 0
 INFO  CSP violations on last page: 0
