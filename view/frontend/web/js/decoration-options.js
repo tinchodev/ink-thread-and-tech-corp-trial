@@ -5,6 +5,7 @@
  * - Method "None" disables locations and note, so nothing is posted and no location is required.
  * - Locations without a price table for the chosen method are disabled.
  * - At most N locations; mutually exclusive locations disable each other.
+ * A greyed-out location shows its reason inline; valid selections never show a message.
  */
 define([
     'jquery',
@@ -37,7 +38,6 @@ define([
             this.method = this.element.find('[data-role="decoration-method"]');
             this.checkboxes = this.element.find('[data-role="decoration-locations"] input[type="checkbox"]');
             this.note = this.element.find('[data-role="decoration-note"]');
-            this.hint = this.element.find('[data-role="decoration-hint"]');
 
             this._on(this.method, {change: this._refresh});
             this._on(this.checkboxes, {change: this._refresh});
@@ -54,8 +54,7 @@ define([
                 decorated = method !== this.options.noneMethod,
                 offered = this.options.offeredLocations[method] || [],
                 checked,
-                blocked = {},
-                hints = [];
+                blockedBy = {};
 
             this.checkboxes.each(function () {
                 if (!decorated || offered.indexOf(this.value) === -1) {
@@ -68,31 +67,31 @@ define([
 
             this.options.exclusivePairs.forEach(function (pair) {
                 if (checked.indexOf(pair[0]) !== -1) {
-                    blocked[pair[1]] = pair[0];
+                    blockedBy[pair[1]] = pair[0];
                 }
                 if (checked.indexOf(pair[1]) !== -1) {
-                    blocked[pair[0]] = pair[1];
+                    blockedBy[pair[0]] = pair[1];
                 }
             });
 
             this.checkboxes.each(function (index, checkbox) {
-                var full = checked.length >= this.options.maxLocations && !checkbox.checked;
+                var notOffered = decorated && offered.indexOf(checkbox.value) === -1,
+                    blocker = blockedBy[checkbox.value],
+                    full = checked.length >= this.options.maxLocations && !checkbox.checked,
+                    reason = '';
 
-                checkbox.disabled = !decorated || offered.indexOf(checkbox.value) === -1 ||
-                    !!blocked[checkbox.value] || full;
-                $(checkbox).closest('.field.choice').toggleClass('_disabled', checkbox.disabled);
+                if (notOffered) {
+                    reason = this.options.messages.notOffered;
+                } else if (decorated && blocker) {
+                    reason = this.options.messages.exclusive.replace('%1', this.options.labels[blocker]);
+                }
+
+                checkbox.disabled = !decorated || notOffered || !!blocker || full;
+                $(checkbox).closest('.field.choice')
+                    .toggleClass('_disabled', checkbox.disabled)
+                    .find('[data-role="decoration-reason"]').text(reason);
             }.bind(this));
 
-            Object.keys(blocked).forEach(function (location) {
-                hints.push(this.options.messages.exclusive
-                    .replace('%1', this.options.labels[blocked[location]])
-                    .replace('%2', this.options.labels[location]));
-            }.bind(this));
-            if (decorated && checked.length >= this.options.maxLocations) {
-                hints.push(this.options.messages.maxLocations);
-            }
-
-            this.hint.text(hints.join(' ')).prop('hidden', hints.length === 0);
             this.note.prop('disabled', !decorated);
             this.element.find('[data-role="decoration-locations"], [data-role="decoration-note-field"]')
                 .toggleClass('_disabled', !decorated);

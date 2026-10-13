@@ -58,10 +58,10 @@ $id = 'inkthread-decoration-' . (int)$product->getId();
                            <?= in_array($code, $selectedLocations, true) ? 'checked="checked"' : '' ?>/>
                     <label class="label" for="<?= $escaper->escapeHtmlAttr($inputId) ?>">
                         <span><?= $escaper->escapeHtml($label) ?></span>
+                        <span class="inkthread-decoration-reason" data-role="decoration-reason"></span>
                     </label>
                 </div>
             <?php endforeach; ?>
-            <div class="message notice inkthread-decoration-hint" data-role="decoration-hint" hidden></div>
         </div>
     </div>
 

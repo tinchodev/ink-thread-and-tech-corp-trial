@@ -126,13 +126,9 @@ class DecorationOptions implements ArgumentInterface
             'exclusivePairs' => SelectionValidator::EXCLUSIVE_PAIRS,
             'offeredLocations' => $offered,
             'messages' => [
-                // Hints explain why an option is greyed out; they are not errors about the current choice.
-                'maxLocations' => (string)__(
-                    'Maximum of %1 print locations selected.',
-                    SelectionValidator::MAX_LOCATIONS
-                ),
-                // %1 = selected location, %2 = location it blocks
-                'exclusive' => (string)__('%2 can\'t be combined with %1.'),
+                // Shown next to a greyed-out location to say why; not an error about the current choice.
+                'exclusive' => (string)__('(not with %1)'),
+                'notOffered' => (string)__('(not available)'),
                 'noMarkup' => (string)__('The decoration note cannot contain the characters < or >.'),
             ],
             'labels' => $this->printLocation->getLabels(),
