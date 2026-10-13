@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="inkthread_decoration" translate="label" sortOrder="900" showInDefault="1">
+            <label>Decoration Pricing</label>
+            <tab>catalog</tab>
+            <resource>InkThread_DecorationPricing::config</resource>
+            <group id="pricing" translate="label comment" sortOrder="10" showInDefault="1">
+                <label>Per-unit Price by Print Location</label>
+                <comment><![CDATA[Each row is a quantity tier: its unit price applies from "From quantity" up to the next row's quantity for the same location. A location with no rows for a method cannot be chosen with that method. Prices are in the base currency.]]></comment>
+                <field id="embroidery" translate="label" sortOrder="10" showInDefault="1">
+                    <label>Embroidery</label>
+                    <frontend_model>InkThread\DecorationPricing\Block\Adminhtml\Form\Field\PriceTable</frontend_model>
+                    <backend_model>InkThread\DecorationPricing\Model\Config\Backend\PriceTable</backend_model>
+                </field>
+                <field id="screen_print" translate="label" sortOrder="20" showInDefault="1">
+                    <label>Screen print</label>
+                    <frontend_model>InkThread\DecorationPricing\Block\Adminhtml\Form\Field\PriceTable</frontend_model>
+                    <backend_model>InkThread\DecorationPricing\Model\Config\Backend\PriceTable</backend_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

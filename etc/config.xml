@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <inkthread_decoration>
+            <pricing>
+                <embroidery>{"_1":{"location":"left_chest","min_qty":"1","price":"4.00"},"_2":{"location":"left_chest","min_qty":"12","price":"3.25"},"_3":{"location":"left_chest","min_qty":"48","price":"2.50"},"_4":{"location":"right_chest","min_qty":"1","price":"4.00"},"_5":{"location":"right_chest","min_qty":"12","price":"3.25"},"_6":{"location":"right_chest","min_qty":"48","price":"2.50"},"_7":{"location":"sleeve","min_qty":"1","price":"3.50"},"_8":{"location":"sleeve","min_qty":"12","price":"2.75"},"_9":{"location":"sleeve","min_qty":"48","price":"2.00"},"_10":{"location":"upper_back","min_qty":"1","price":"5.00"},"_11":{"location":"upper_back","min_qty":"12","price":"4.25"},"_12":{"location":"upper_back","min_qty":"48","price":"3.50"},"_13":{"location":"full_back","min_qty":"1","price":"7.50"},"_14":{"location":"full_back","min_qty":"12","price":"6.50"},"_15":{"location":"full_back","min_qty":"48","price":"5.50"}}</embroidery>
+                <screen_print>{"_1":{"location":"left_chest","min_qty":"1","price":"2.00"},"_2":{"location":"left_chest","min_qty":"24","price":"1.50"},"_3":{"location":"left_chest","min_qty":"96","price":"1.00"},"_4":{"location":"right_chest","min_qty":"1","price":"2.00"},"_5":{"location":"right_chest","min_qty":"24","price":"1.50"},"_6":{"location":"right_chest","min_qty":"96","price":"1.00"},"_7":{"location":"sleeve","min_qty":"1","price":"1.75"},"_8":{"location":"sleeve","min_qty":"24","price":"1.25"},"_9":{"location":"sleeve","min_qty":"96","price":"0.90"},"_10":{"location":"upper_back","min_qty":"1","price":"2.50"},"_11":{"location":"upper_back","min_qty":"24","price":"2.00"},"_12":{"location":"upper_back","min_qty":"96","price":"1.50"},"_13":{"location":"full_back","min_qty":"1","price":"4.00"},"_14":{"location":"full_back","min_qty":"24","price":"3.25"},"_15":{"location":"full_back","min_qty":"96","price":"2.50"}}</screen_print>
+            </pricing>
+        </inkthread_decoration>
+    </default>
+</config>

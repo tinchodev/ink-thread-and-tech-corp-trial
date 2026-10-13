@@ -1,0 +1,25 @@
+{
+    "name": "inkthread/module-decoration-pricing",
+    "description": "Decoration (embroidery / screen print) pricing by print location and quantity tier.",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "require": {
+        "php": "~8.2.0||~8.3.0",
+        "magento/framework": "103.0.*",
+        "magento/module-backend": "102.0.*",
+        "magento/module-catalog": "104.0.*",
+        "magento/module-checkout": "100.4.*",
+        "magento/module-config": "101.2.*",
+        "magento/module-configurable-product": "100.4.*",
+        "magento/module-quote": "101.2.*",
+        "magento/module-sales": "103.0.*"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "InkThread\\DecorationPricing\\": ""
+        }
+    }
+}
