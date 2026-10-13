@@ -246,11 +246,17 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 - Live fee preview on the product page (not required. Would duplicate pricing logic in JS or need an endpoint).
 - Integration/MFTF tests (unit + scripted manual QA instead, timebox).
 
-## 10. Extension after step 6: text and artwork per location (requested by Martin, beyond the brief)
+## 10. Extension after step 6: per-location embroidery text and screen-print artwork (Martin's decisions, beyond the brief)
 
-Requested after the core build was done, as extra effort within the time cap. Decisions: the general note stays; each
-selected location also gets **optional text (≤ 100 chars, no `<` `>`)** and an **optional artwork file (PNG, JPG or
-PDF, ≤ 10 MB)**. Neither changes the fee, and neither splits a tier pool (same rule as the note).
+Added after the core build, as extra effort within the time cap. **Planning decisions (Martin):**
+
+| Decision | Choice |
+|---|---|
+| Embroidery | Each selected location gets its own **optional text to embroider** (≤ 100 chars, no `<` `>`). No artwork upload. |
+| Screen print | Each selected location gets its own **optional artwork upload** (PNG, JPG or PDF, ≤ 10 MB). No per-location text. |
+| General decoration note | **Kept for both methods** (≤ 255 chars), for instructions that aren't location-specific. |
+| Pricing | Text and artwork **don't change the fee** and **don't split a tier pool** (same rule as the note). |
+| Mismatched input | Text posted for screen print, or a file posted for embroidery, is **ignored** (the form never sends it; a crafted request gains nothing). This follows the existing rule that method None drops locations and note. |
 
 - **Data:** `Selection` gains per-location `text` and `artwork` (`ArtworkFile`: stored path, sanitised original name,
   size, MIME type). It is stored in the same quote item option and order snapshot.
@@ -261,9 +267,11 @@ PDF, ≤ 10 MB)**. Neither changes the fee, and neither splits a tier pool (same
 - **Keep on edit / reorder:** a stored file is referenced by an **encrypted token** (Magento encryptor, authenticated).
   It is written back into the buy request, so cart edit and reorder keep the file without re-upload, and a client
   can't point at an arbitrary path. Edit offers "remove".
-- **Display:** the breakdown line per location adds the text and the artwork file name (cart, checkout, orders,
-  emails).
-- **Admin:** an "Decoration artwork" block on the order view lists files per item/location with a download link.
+- **Display:** the breakdown line per location adds the embroidery text or the artwork file name (cart, checkout,
+  orders, emails).
+- **Product page:** a details row per checked location shows the text input for embroidery, or the file input for
+  screen print. Switching method swaps them, and hidden inputs are disabled so they aren't posted.
+- **Admin:** a "Decoration artwork" block on the order view lists files per item/location with a download link.
   The download goes through an admin controller (ACL `Magento_Sales::actions_view`), served as an attachment.
 - **Tests:** unit tests for parsing/validation of per-location text, artwork validation, token tamper rejection and
   formatter output. The storefront QA script gets multipart uploads, and the browser QA gets file inputs.
