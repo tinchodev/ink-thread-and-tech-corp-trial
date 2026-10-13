@@ -7,7 +7,7 @@ This is the agent-produced plan **before any code**. Edits made after review are
 
 ## 1. Goal (restated)
 
-On the product page, a customer picks a decoration method (None / Embroidery / Screen print),
+On the product page, a customer picks a decoration method (None / Embroidery / Screen Print),
 1–3 print locations and an optional note. The per-unit decoration fee is the sum of each selected
 location's price at the quantity tier. **Client clarification (Q1):** the tier qty is the combined qty of all
 cart lines with the same product and the same decoration (e.g. 6 S + 6 M of one tee = 12+ tier), not the single
@@ -209,7 +209,7 @@ Outputs are saved to `docs/checks/` for the deliverable.
 4. Configurable tee (choose size/colour) → fee counted once and shown on the parent line.
 4b. Same tee + same decoration: 6 × S and 6 × M → both lines at the 12+ tier. Change M to 5 → both drop to 1–11.
     Remove the S line → M re-tiers alone.
-5. Edit item in cart → form prefilled → switch to Screen print Full back → re-priced.
+5. Edit item in cart → form prefilled → switch to Screen Print Full back → re-priced.
 6. Invalid combos on the PDP (no location, 4 locations, Upper + Full back) → message; also bypass the JS (curl) → server rejects.
 7. Place order as guest and as a logged-in customer → breakdown in success/customer order view, admin order view, email (Mailhog).
 8. Change admin prices after ordering → old order unchanged; new cart uses new prices.
@@ -253,7 +253,7 @@ Added after the core build, as extra effort within the time cap. **Planning deci
 | Decision | Choice |
 |---|---|
 | Embroidery | Each selected location **requires** its own **text to embroider** (≤ 100 chars, no `<` `>`). No artwork upload. |
-| Screen print | Each selected location **requires** its own **artwork upload** (PNG, JPG or PDF, ≤ 10 MB). No per-location text. On cart edit the current file counts, so it is replaced, not removed. |
+| Screen Print | Each selected location **requires** its own **artwork upload** (PNG, JPG or PDF, ≤ 10 MB). No per-location text. On cart edit the current file counts, so it is replaced, not removed. |
 | General decoration note | **Kept for both methods** (≤ 255 chars), for instructions that aren't location-specific. |
 | Pricing | Text and artwork **don't change the fee** and **don't split a tier pool** (same rule as the note). |
 | Product page | Only the field for the chosen method is shown (text for embroidery, file for screen print), one per selected location, marked required. |
