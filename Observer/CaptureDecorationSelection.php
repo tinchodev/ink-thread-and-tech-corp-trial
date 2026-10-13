@@ -90,6 +90,7 @@ class CaptureDecorationSelection implements ObserverInterface
         $this->selectionValidator->assertValid($selection);
         $this->feeCalculator->assertOffered($selection);
         $selection = $selection->withArtwork($this->requestArtworkResolver->resolve($buyRequest, $selection));
+        $this->selectionValidator->assertComplete($selection);
 
         $product->addCustomOption(
             ItemFeeProvider::OPTION_CODE,

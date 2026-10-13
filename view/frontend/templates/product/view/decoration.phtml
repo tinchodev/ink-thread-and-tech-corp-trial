@@ -20,6 +20,7 @@ $selectedLocations = $preconfigured['locations'] ?? [];
 $note = $preconfigured['note'] ?? '';
 $locationTexts = $preconfigured['location_texts'] ?? [];
 $currentArtwork = $preconfigured['artwork'] ?? [];
+$artworkRequiredMessage = (string)__('Please upload the artwork for this location.');
 $id = 'inkthread-decoration-' . (int)$product->getId();
 ?>
 <fieldset class="fieldset inkthread-decoration" id="<?= $escaper->escapeHtmlAttr($id) ?>">
@@ -70,43 +71,45 @@ $id = 'inkthread-decoration-' . (int)$product->getId();
     <div class="inkthread-decoration-details" data-role="decoration-details">
         <?php foreach ($viewModel->getLocations() as $code => $label): ?>
             <?php $rowId = $id . '-details-' . $code; ?>
-            <div class="field inkthread-decoration-detail" data-role="decoration-detail"
+            <div class="inkthread-decoration-detail" data-role="decoration-detail"
                  data-location="<?= $escaper->escapeHtmlAttr($code) ?>" hidden>
-                <span class="label"><span><?= $escaper->escapeHtml($label) ?></span></span>
-                <div class="control">
-                    <input type="text"
-                           class="input-text"
-                           id="<?= $escaper->escapeHtmlAttr($rowId) ?>-text"
-                           name="<?= $escaper->escapeHtmlAttr($field) ?>[location_texts][<?=
-                                $escaper->escapeHtmlAttr($code) ?>]"
-                           maxlength="<?= (int)$viewModel->getMaxLocationTextLength() ?>"
-                           placeholder="<?= $escaper->escapeHtmlAttr(__('Text to decorate (optional)')) ?>"
-                           aria-label="<?= $escaper->escapeHtmlAttr(__('Text for %1', $label)) ?>"
-                           data-validate="{'inkthread-decoration-no-markup':true}"
-                           value="<?= $escaper->escapeHtmlAttr($locationTexts[$code] ?? '') ?>"/>
-                    <label class="inkthread-decoration-artwork" for="<?= $escaper->escapeHtmlAttr($rowId) ?>-file">
-                        <span><?= $escaper->escapeHtml(__('Artwork (optional, PNG/JPG/PDF, max 10 MB)')) ?></span>
+                <div class="field required" data-role="decoration-detail-text">
+                    <label class="label" for="<?= $escaper->escapeHtmlAttr($rowId) ?>-text">
+                        <span><?= $escaper->escapeHtml(__('%1: text to embroider', $label)) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="text"
+                               class="input-text"
+                               id="<?= $escaper->escapeHtmlAttr($rowId) ?>-text"
+                               name="<?= $escaper->escapeHtmlAttr($field) ?>[location_texts][<?=
+                                    $escaper->escapeHtmlAttr($code) ?>]"
+                               maxlength="<?= (int)$viewModel->getMaxLocationTextLength() ?>"
+                               data-validate="{'required':true,'inkthread-decoration-no-markup':true}"
+                               value="<?= $escaper->escapeHtmlAttr($locationTexts[$code] ?? '') ?>"/>
+                    </div>
+                </div>
+                <div class="field required" data-role="decoration-detail-artwork">
+                    <label class="label" for="<?= $escaper->escapeHtmlAttr($rowId) ?>-file">
+                        <span><?= $escaper->escapeHtml(__('%1: artwork (PNG/JPG/PDF, max 10 MB)', $label)) ?></span>
+                    </label>
+                    <div class="control">
                         <input type="file"
                                id="<?= $escaper->escapeHtmlAttr($rowId) ?>-file"
                                name="<?= $escaper->escapeHtmlAttr($viewModel->getArtworkFieldName($code)) ?>"
                                accept="<?= $escaper->escapeHtmlAttr($viewModel->getArtworkAccept()) ?>"
-                               data-validate="{'inkthread-decoration-artwork':true}"/>
-                    </label>
-                    <?php if (isset($currentArtwork[$code])): ?>
-                        <div class="inkthread-decoration-current">
-                            <?= $escaper->escapeHtml(__('Current artwork: %1', $currentArtwork[$code]['name'])) ?>
-                            <input type="hidden"
-                                   name="<?= $escaper->escapeHtmlAttr($field) ?>[artwork_tokens][<?=
+                               data-validate="{'inkthread-decoration-artwork':true}"
+                               data-msg-required="<?= $escaper->escapeHtmlAttr($artworkRequiredMessage) ?>"/>
+                        <?php if (isset($currentArtwork[$code])): ?>
+                            <div class="inkthread-decoration-current">
+                                <?= $escaper->escapeHtml($currentArtwork[$code]['label']) ?>
+                                <input type="hidden"
+                                       data-role="decoration-artwork-token"
+                                       name="<?= $escaper->escapeHtmlAttr($field) ?>[artwork_tokens][<?=
                                         $escaper->escapeHtmlAttr($code) ?>]"
-                                   value="<?= $escaper->escapeHtmlAttr($currentArtwork[$code]['token']) ?>"/>
-                            <label>
-                                <input type="checkbox" value="1"
-                                       name="<?= $escaper->escapeHtmlAttr($field) ?>[artwork_remove][<?=
-                                            $escaper->escapeHtmlAttr($code) ?>]"/>
-                                <?= $escaper->escapeHtml(__('Remove')) ?>
-                            </label>
-                        </div>
-                    <?php endif; ?>
+                                       value="<?= $escaper->escapeHtmlAttr($currentArtwork[$code]['token']) ?>"/>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>

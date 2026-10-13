@@ -79,30 +79,41 @@ class BreakdownFormatterTest extends TestCase
         );
     }
 
-    public function testLocationTextAndArtworkAreShownOnTheLocationLine(): void
+    public function testEmbroideryTextIsShownOnTheLocationLine(): void
     {
         $selection = new Selection(
             DecorationMethod::EMBROIDERY,
             [PrintLocation::LEFT_CHEST, PrintLocation::SLEEVE],
             '',
-            [PrintLocation::LEFT_CHEST => 'ACME'],
-            [
-                PrintLocation::LEFT_CHEST => new ArtworkFile(
-                    'inkthread_decoration/artwork/a.png',
-                    'logo.png',
-                    1,
-                    'image/png'
-                ),
-            ]
+            [PrintLocation::LEFT_CHEST => 'ACME', PrintLocation::SLEEVE => '2026']
         );
 
         $lines = $this->breakdownFormatter->format($selection, $this->feeCalculator->calculate($selection, 12));
 
-        $this->assertSame(
-            ['label' => 'Left chest', 'value' => '$3.25 / unit · Text: "ACME" · Artwork: logo.png'],
-            $lines[1]
+        $this->assertSame(['label' => 'Left chest', 'value' => '$3.25 / unit · Text: "ACME"'], $lines[1]);
+        $this->assertSame(['label' => 'Sleeve', 'value' => '$2.75 / unit · Text: "2026"'], $lines[2]);
+    }
+
+    public function testScreenPrintArtworkIsShownOnTheLocationLine(): void
+    {
+        $selection = new Selection(
+            DecorationMethod::SCREEN_PRINT,
+            [PrintLocation::FULL_BACK],
+            '',
+            [],
+            [
+                PrintLocation::FULL_BACK => new ArtworkFile(
+                    'inkthread_decoration/artwork/a.pdf',
+                    'back.pdf',
+                    1,
+                    'application/pdf'
+                ),
+            ]
         );
-        $this->assertSame(['label' => 'Sleeve', 'value' => '$2.75 / unit'], $lines[2]);
+
+        $lines = $this->breakdownFormatter->format($selection, $this->feeCalculator->calculate($selection, 100));
+
+        $this->assertSame(['label' => 'Full back', 'value' => '$2.50 / unit · Artwork: back.pdf'], $lines[1]);
     }
 
     public function testWithoutFeeOnlyTheSelectionIsShown(): void

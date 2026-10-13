@@ -6,7 +6,8 @@
  * - Locations without a price table for the chosen method are disabled.
  * - At most N locations; mutually exclusive locations disable each other.
  * A greyed-out location shows its reason inline; valid selections never show a message.
- * Each checked location shows its own optional text and artwork inputs; hidden ones are disabled (not posted).
+ * Each checked location shows one required field: text for embroidery, an artwork file for screen print.
+ * Hidden fields are disabled, so they are neither validated nor posted.
  */
 define([
     'jquery',
@@ -49,7 +50,9 @@ define([
             offeredLocations: {},
             messages: {},
             labels: {},
-            artwork: {}
+            artwork: {},
+            textMethods: [],
+            artworkMethods: []
         },
 
         /** @inheritdoc */
@@ -115,12 +118,26 @@ define([
                     .find('[data-role="decoration-reason"]').text(reason);
             }.bind(this));
 
-            this.details.each(function () {
-                var show = decorated && checked.indexOf(this.getAttribute('data-location')) !== -1;
+            this.details.each(function (index, row) {
+                var show = decorated && checked.indexOf(row.getAttribute('data-location')) !== -1,
+                    parts = {
+                        'decoration-detail-text': show && this.options.textMethods.indexOf(method) !== -1,
+                        'decoration-detail-artwork': show && this.options.artworkMethods.indexOf(method) !== -1
+                    };
 
-                this.hidden = !show;
-                $(this).find('input').prop('disabled', !show);
-            });
+                row.hidden = !show;
+                Object.keys(parts).forEach(function (role) {
+                    var part = $(row).find('[data-role="' + role + '"]');
+
+                    part.prop('hidden', !parts[role]).find('input').prop('disabled', !parts[role]);
+                });
+                // Native "required" (an empty field is otherwise treated as optional and skips custom rules); on cart
+                // edit the current file counts, so a new upload is only needed when there is none.
+                $(row).find('input[type="file"]').prop(
+                    'required',
+                    parts['decoration-detail-artwork'] && !$(row).find('[data-role="decoration-artwork-token"]').length
+                );
+            }.bind(this));
 
             this.note.prop('disabled', !decorated);
             this.element.find('[data-role="decoration-locations"], [data-role="decoration-note-field"]')

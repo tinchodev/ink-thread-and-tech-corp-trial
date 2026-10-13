@@ -59,6 +59,10 @@ class SelectionFactory
 
         $texts = [];
         $rawTexts = is_array($data['location_texts'] ?? null) ? $data['location_texts'] : [];
+        if (!in_array($method, DecorationMethod::LOCATION_TEXT_METHODS, true)) {
+            $rawTexts = [];
+        }
+
         foreach (array_unique($locations) as $location) {
             $text = $rawTexts[$location] ?? null;
             if (is_scalar($text) && trim((string)$text) !== '') {
@@ -80,7 +84,9 @@ class SelectionFactory
     public function createFromStored(mixed $data): ?Selection
     {
         $selection = $this->createFromRequestData($data);
-        if (!$selection instanceof Selection || !is_array($data) || !is_array($data['artwork'] ?? null)) {
+        if (!$selection instanceof Selection || !is_array($data) || !is_array($data['artwork'] ?? null)
+            || !in_array($selection->getMethod(), DecorationMethod::ARTWORK_METHODS, true)
+        ) {
             return $selection;
         }
 

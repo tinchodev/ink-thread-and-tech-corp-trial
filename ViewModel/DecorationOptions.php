@@ -133,8 +133,8 @@ class DecorationOptions implements ArgumentInterface
     /**
      * Current selection when editing a cart item (null on a fresh product page).
      *
-     * Artwork comes from the encrypted tokens in the buy request: each entry has the display name and the token to
-     * post back to keep the file.
+     * Artwork comes from the encrypted tokens in the buy request: each entry has the display name, a display label and
+     * the token to post back to keep the file.
      *
      * @param Product $product
      * @return array<string,mixed>|null
@@ -153,7 +153,11 @@ class DecorationOptions implements ArgumentInterface
         foreach ($tokens as $location => $token) {
             $file = $this->artworkToken->decode($token);
             if ($file instanceof ArtworkFile && in_array($location, $selection->getLocations(), true)) {
-                $result['artwork'][$location] = ['name' => $file->getName(), 'token' => $token];
+                $result['artwork'][$location] = [
+                    'name' => $file->getName(),
+                    'token' => $token,
+                    'label' => (string)__('Current artwork: %1 (upload a file to replace it)', $file->getName()),
+                ];
             }
         }
 
@@ -189,6 +193,8 @@ class DecorationOptions implements ArgumentInterface
                 'notOffered' => (string)__('(not available)'),
                 'noMarkup' => (string)__('The decoration note cannot contain the characters < or >.'),
             ],
+            'textMethods' => DecorationMethod::LOCATION_TEXT_METHODS,
+            'artworkMethods' => DecorationMethod::ARTWORK_METHODS,
             'artwork' => [
                 'maxSize' => ArtworkValidator::MAX_SIZE,
                 'extensions' => array_keys(ArtworkValidator::ALLOWED_TYPES),

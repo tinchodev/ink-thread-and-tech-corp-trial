@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace InkThread\DecorationPricing\Test\Unit\Model;
 
+use InkThread\DecorationPricing\Model\Artwork\ArtworkFile;
 use InkThread\DecorationPricing\Model\Selection;
 use InkThread\DecorationPricing\Model\SelectionValidator;
 use InkThread\DecorationPricing\Model\Source\DecorationMethod;
@@ -206,6 +207,70 @@ class SelectionValidatorTest extends TestCase
         );
     }
 
+    public function testCompleteEmbroideryAndScreenPrintPass(): void
+    {
+        $embroidery = new Selection(
+            DecorationMethod::EMBROIDERY,
+            [PrintLocation::LEFT_CHEST, PrintLocation::SLEEVE],
+            '',
+            [PrintLocation::LEFT_CHEST => 'ACME', PrintLocation::SLEEVE => '2026']
+        );
+        $screenPrint = new Selection(
+            DecorationMethod::SCREEN_PRINT,
+            [PrintLocation::FULL_BACK],
+            '',
+            [],
+            [PrintLocation::FULL_BACK => $this->artwork()]
+        );
+
+        $this->assertSame([], $this->selectionValidator->validateCompleteness($embroidery));
+        $this->assertSame([], $this->selectionValidator->validateCompleteness($screenPrint));
+        $this->assertSame([], $this->selectionValidator->validateCompleteness(new Selection('none', [], '')));
+    }
+
+    public function testEmbroideryRequiresTextForEachLocation(): void
+    {
+        $selection = new Selection(
+            DecorationMethod::EMBROIDERY,
+            [PrintLocation::LEFT_CHEST, PrintLocation::SLEEVE],
+            '',
+            [PrintLocation::LEFT_CHEST => 'ACME'],
+            [PrintLocation::SLEEVE => $this->artwork()]
+        );
+
+        $this->assertSame(
+            ['Please enter the text to embroider for Sleeve.'],
+            array_map('strval', $this->selectionValidator->validateCompleteness($selection)),
+            'Artwork does not stand in for embroidery text.'
+        );
+    }
+
+    public function testScreenPrintRequiresArtworkForEachLocation(): void
+    {
+        $selection = new Selection(
+            DecorationMethod::SCREEN_PRINT,
+            [PrintLocation::LEFT_CHEST, PrintLocation::FULL_BACK],
+            '',
+            [PrintLocation::FULL_BACK => 'text does not count'],
+            [PrintLocation::LEFT_CHEST => $this->artwork()]
+        );
+
+        $this->assertSame(
+            ['Please upload artwork for Full back.'],
+            array_map('strval', $this->selectionValidator->validateCompleteness($selection))
+        );
+    }
+
+    public function testAssertCompleteThrows(): void
+    {
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Please upload artwork for Left chest.');
+
+        $this->selectionValidator->assertComplete(
+            new Selection(DecorationMethod::SCREEN_PRINT, [PrintLocation::LEFT_CHEST], '')
+        );
+    }
+
     public function testAllBrokenRulesAreReported(): void
     {
         $selection = new Selection(
@@ -239,6 +304,14 @@ class SelectionValidatorTest extends TestCase
         );
 
         $this->addToAssertionCount(1);
+    }
+
+    /**
+     * @return ArtworkFile
+     */
+    private function artwork(): ArtworkFile
+    {
+        return new ArtworkFile('inkthread_decoration/artwork/a.png', 'logo.png', 1, 'image/png');
     }
 
     /**

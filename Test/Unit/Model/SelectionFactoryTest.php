@@ -132,7 +132,7 @@ class SelectionFactoryTest extends TestCase
     public function testStoredDataRestoresArtworkForSelectedLocations(): void
     {
         $selection = $this->selectionFactory->createFromStored([
-            'method' => 'embroidery',
+            'method' => 'screen_print',
             'locations' => ['sleeve'],
             'artwork' => [
                 'sleeve' => ['path' => 'inkthread_decoration/artwork/a.png', 'name' => 'logo.png', 'size' => 10],
@@ -150,7 +150,7 @@ class SelectionFactoryTest extends TestCase
     public function testStoredArtworkOutsideStorageIsIgnored(string $path): void
     {
         $selection = $this->selectionFactory->createFromStored([
-            'method' => 'embroidery',
+            'method' => 'screen_print',
             'locations' => ['sleeve'],
             'artwork' => ['sleeve' => ['path' => $path, 'name' => 'x.png']],
         ]);
@@ -168,6 +168,28 @@ class SelectionFactoryTest extends TestCase
             'traversal' => ['inkthread_decoration/artwork/../../app/etc/env.php'],
             'absolute' => ['/etc/passwd'],
         ];
+    }
+
+    public function testScreenPrintIgnoresLocationTexts(): void
+    {
+        $selection = $this->selectionFactory->createFromRequestData([
+            'method' => 'screen_print',
+            'locations' => ['left_chest'],
+            'location_texts' => ['left_chest' => 'ACME'],
+        ]);
+
+        $this->assertSame([], $selection->getLocationTexts());
+    }
+
+    public function testEmbroideryIgnoresStoredArtwork(): void
+    {
+        $selection = $this->selectionFactory->createFromStored([
+            'method' => 'embroidery',
+            'locations' => ['sleeve'],
+            'artwork' => ['sleeve' => ['path' => 'inkthread_decoration/artwork/a.png', 'name' => 'logo.png']],
+        ]);
+
+        $this->assertSame([], $selection->getArtwork());
     }
 
     public function testPricingKeyIgnoresLocationOrderAndNote(): void

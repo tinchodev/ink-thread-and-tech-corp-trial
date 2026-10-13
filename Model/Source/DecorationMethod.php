@@ -20,6 +20,16 @@ class DecorationMethod implements OptionSourceInterface
     public const SCREEN_PRINT = 'screen_print';
 
     /**
+     * Methods that take a text per location (embroidery).
+     */
+    public const LOCATION_TEXT_METHODS = [self::EMBROIDERY];
+
+    /**
+     * Methods that take an artwork file per location (screen print).
+     */
+    public const ARTWORK_METHODS = [self::SCREEN_PRINT];
+
+    /**
      * Method code => label.
      *
      * @return array<string, string>
@@ -41,6 +51,28 @@ class DecorationMethod implements OptionSourceInterface
     public function getPricedMethods(): array
     {
         return [self::EMBROIDERY, self::SCREEN_PRINT];
+    }
+
+    /**
+     * Whether the method takes a text per location.
+     *
+     * @param string $method
+     * @return bool
+     */
+    public function usesLocationText(string $method): bool
+    {
+        return in_array($method, self::LOCATION_TEXT_METHODS, true);
+    }
+
+    /**
+     * Whether the method takes an artwork file per location.
+     *
+     * @param string $method
+     * @return bool
+     */
+    public function usesArtwork(string $method): bool
+    {
+        return in_array($method, self::ARTWORK_METHODS, true);
     }
 
     /**

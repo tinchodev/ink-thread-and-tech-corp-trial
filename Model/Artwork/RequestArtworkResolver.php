@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace InkThread\DecorationPricing\Model\Artwork;
 
 use InkThread\DecorationPricing\Model\Selection;
+use InkThread\DecorationPricing\Model\Source\DecorationMethod;
 use InkThread\DecorationPricing\Observer\CaptureDecorationSelection;
 use Laminas\Stdlib\ParametersInterface;
 use Magento\Framework\App\Request\Http;
@@ -17,7 +18,8 @@ use Magento\Framework\Exception\LocalizedException;
 /**
  * Works out the artwork of each selected location for one buy request:
  * - a new upload (file input inkthread_artwork_<location>) replaces anything else;
- * - otherwise an existing file is kept via its encrypted token (cart edit, reorder), unless "remove" is ticked.
+ * - otherwise an existing file is kept via its encrypted token (cart edit, reorder).
+ * Only methods that take artwork (screen print) get any; uploads for other methods are ignored.
  *
  * The result is written back into the buy request as tokens, so core saves it in info_buyRequest for later edits
  * and reorders. Each buy request is resolved once, because an uploaded temp file can only be moved once.
@@ -62,17 +64,15 @@ class RequestArtworkResolver
         $data = is_array($data) ? $data : [];
 
         $tokens = is_array($data['artwork_tokens'] ?? null) ? $data['artwork_tokens'] : [];
-        $remove = is_array($data['artwork_remove'] ?? null) ? $data['artwork_remove'] : [];
 
         $artwork = [];
-        foreach (array_unique($selection->getLocations()) as $location) {
+        $locations = in_array($selection->getMethod(), DecorationMethod::ARTWORK_METHODS, true)
+            ? array_unique($selection->getLocations())
+            : [];
+        foreach ($locations as $location) {
             $upload = $this->getUpload($location);
             if ($upload !== null) {
                 $artwork[$location] = $this->artworkStorage->saveUpload(self::FILE_FIELD_PREFIX . $location, $upload);
-                continue;
-            }
-
-            if (!empty($remove[$location])) {
                 continue;
             }
 
@@ -83,7 +83,6 @@ class RequestArtworkResolver
         }
 
         $data['artwork_tokens'] = array_map($this->artworkToken->encode(...), $artwork);
-        unset($data['artwork_remove']);
         $dataObject->setData(CaptureDecorationSelection::REQUEST_KEY, $data);
 
         return $this->weakMap[$dataObject] = $artwork;

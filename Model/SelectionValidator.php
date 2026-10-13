@@ -118,6 +118,47 @@ class SelectionValidator
     }
 
     /**
+     * Required per-location details: text for each embroidery location, artwork for each screen print location.
+     *
+     * Separate from validate() because artwork is only known once uploads are resolved.
+     *
+     * @param Selection $selection
+     * @return Phrase[]
+     */
+    public function validateCompleteness(Selection $selection): array
+    {
+        $errors = [];
+        $method = $selection->getMethod();
+        foreach (array_unique($selection->getLocations()) as $location) {
+            $label = $this->printLocation->getLabel($location);
+            if ($this->decorationMethod->usesLocationText($method) && $selection->getLocationText($location) === '') {
+                $errors[] = __('Please enter the text to embroider for %1.', $label);
+            }
+
+            if ($this->decorationMethod->usesArtwork($method) && !isset($selection->getArtwork()[$location])) {
+                $errors[] = __('Please upload artwork for %1.', $label);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Throw when required per-location details are missing.
+     *
+     * @param Selection $selection
+     * @return void
+     * @throws LocalizedException
+     */
+    public function assertComplete(Selection $selection): void
+    {
+        $errors = $this->validateCompleteness($selection);
+        if ($errors !== []) {
+            throw new LocalizedException(__(implode(' ', array_map('strval', $errors))));
+        }
+    }
+
+    /**
      * Throw with all broken rules joined, if any.
      *
      * @param Selection $selection
