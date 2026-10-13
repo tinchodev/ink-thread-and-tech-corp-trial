@@ -223,8 +223,8 @@ the same hooks core's own custom options use. The PDP layout is the most fragile
 4. **Note**: required, max length, only when a method is chosen? *(Default: optional, 255 chars, ignored for None.)*
 5. **Left + Right chest** together is allowed and charged twice? *(Default: yes.)*
 6. **Scope**: is global/website-level pricing enough, or are per-store prices needed? Multi-currency?
-7. **Frontend**: Luma only, or Hyvä / headless? Must REST/GraphQL add-to-cart support decorations?
-   *(Default: Luma storefront only. API out of scope.)*
+7. ~~**Frontend**~~ **Answered:** Luma only for now. Hyvä/headless out of scope.
+   REST/GraphQL add-to-cart with decorations stays out of scope (listed as unfinished).
 
 ## 9. Out of scope / known limitations (initial)
 - REST / GraphQL add-to-cart with decorations.
