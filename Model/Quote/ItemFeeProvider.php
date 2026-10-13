@@ -13,6 +13,7 @@ use InkThread\DecorationPricing\Model\Selection;
 use InkThread\DecorationPricing\Model\SelectionFactory;
 use InkThread\DecorationPricing\Model\TierLine;
 use InkThread\DecorationPricing\Model\TierQuantityResolver;
+use Magento\Catalog\Model\Product\Configuration\Item\ItemInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item\AbstractItem;
@@ -45,14 +46,14 @@ class ItemFeeProvider
     }
 
     /**
-     * Decoration stored on a quote item, or null when it has none.
+     * Decoration stored on a quote (or wishlist) item, or null when it has none.
      *
-     * @param AbstractItem $item
+     * @param ItemInterface $item
      * @return Selection|null
      */
-    public function getSelection(AbstractItem $item): ?Selection
+    public function getSelection(ItemInterface $item): ?Selection
     {
-        /** @var \Magento\Quote\Model\Quote\Item\Option|null $option core docblock omits null */
+        /** @var \Magento\Catalog\Model\Product\Configuration\Item\Option\OptionInterface|null $option */
         $option = $item->getOptionByCode(self::OPTION_CODE);
 
         return $option !== null ? $this->decode((string)$option->getValue()) : null;

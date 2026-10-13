@@ -8,4 +8,12 @@
         <plugin name="inkthread_decoration_add_fee"
                 type="InkThread\DecorationPricing\Plugin\AddDecorationFeeToFinalPrice"/>
     </type>
+    <type name="Magento\Catalog\Helper\Product\Configuration">
+        <plugin name="inkthread_decoration_item_options"
+                type="InkThread\DecorationPricing\Plugin\AddDecorationToItemOptions"/>
+    </type>
+    <type name="Magento\Quote\Model\Quote\Item\ToOrderItem">
+        <plugin name="inkthread_decoration_order_snapshot"
+                type="InkThread\DecorationPricing\Plugin\CopyDecorationToOrderItem"/>
+    </type>
 </config>

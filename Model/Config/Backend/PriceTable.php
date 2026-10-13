@@ -80,4 +80,47 @@ class PriceTable extends ArraySerialized
 
         return parent::beforeSave();
     }
+
+    /**
+     * Flag active carts for recollection when prices changed.
+     *
+     * Core does the same for catalog price changes: open carts then show the new unit price instead of a stale one
+     * the next time they are loaded.
+     *
+     * @return $this
+     */
+    public function afterSave()
+    {
+        if ($this->isValueChanged()) {
+            $this->markActiveQuotesForRecollect();
+        }
+
+        return parent::afterSave();
+    }
+
+    /**
+     * Same when the table is reset to its default ("Use system value" deletes the stored value).
+     *
+     * @return $this
+     */
+    public function afterDelete()
+    {
+        $this->markActiveQuotesForRecollect();
+
+        return parent::afterDelete();
+    }
+
+    /**
+     * Set trigger_recollect on all active quotes.
+     *
+     * @return void
+     */
+    private function markActiveQuotesForRecollect(): void
+    {
+        $this->getResource()->getConnection()->update(
+            $this->getResource()->getTable('quote'),
+            ['trigger_recollect' => 1],
+            ['is_active = ?' => 1]
+        );
+    }
 }

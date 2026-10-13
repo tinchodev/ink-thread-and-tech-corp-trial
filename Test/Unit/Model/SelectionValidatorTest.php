@@ -141,6 +141,37 @@ class SelectionValidatorTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider markupNoteProvider
+     */
+    public function testNoteWithMarkupIsRejected(string $note): void
+    {
+        $this->assertSame(
+            ['The decoration note cannot contain the characters < or >.'],
+            $this->messages(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], $note))
+        );
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function markupNoteProvider(): array
+    {
+        return [
+            'tag' => ['<img src=x onerror=1> Logo'],
+            'lone less-than' => ['size < 10cm'],
+            'lone greater-than' => ['width > 5cm'],
+        ];
+    }
+
+    public function testNoteWithOtherSpecialCharactersIsAllowed(): void
+    {
+        $this->assertSame(
+            [],
+            $this->messages(new Selection(DecorationMethod::EMBROIDERY, [PrintLocation::SLEEVE], 'Logo & "white" 50%'))
+        );
+    }
+
     public function testAllBrokenRulesAreReported(): void
     {
         $selection = new Selection(

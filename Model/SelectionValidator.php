@@ -83,6 +83,11 @@ class SelectionValidator
         if (mb_strlen($selection->getNote()) > self::MAX_NOTE_LENGTH) {
             $errors[] = __('The decoration note cannot be longer than %1 characters.', self::MAX_NOTE_LENGTH);
         }
+        // Core renders non-native item option values as HTML in some places (checkout summary sidebar), so markup
+        // is refused at input rather than relying on every output path to escape it.
+        if (strpbrk($selection->getNote(), '<>') !== false) {
+            $errors[] = __('The decoration note cannot contain the characters < or >.');
+        }
 
         return $errors;
     }
