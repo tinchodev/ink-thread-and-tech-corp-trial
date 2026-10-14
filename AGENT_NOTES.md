@@ -68,6 +68,16 @@
     evaluates on empty fields. The test bug was found first, so it's unproven whether the custom rule alone would
     have failed.
 
+11. **Admin price page showed the wrong table (found after delivery).** The agent wrote the shipped default price
+    tables in `etc/config.xml` with the same row keys (`_1`–`_15`) for Embroidery and Screen Print. Magento's admin
+    dynamic rows use those keys as HTML ids, so on Stores > Configuration > Catalog > Decoration Pricing the Embroidery
+    table displayed the Screen Print rows. Saving the page unchanged would have stored Screen Print prices as the
+    embroidery prices. Storefront and cart prices were never affected, and no prices had been saved on trial or locally.
+    The earlier checks covered saving prices and the storefront, not what the admin page shows with the shipped
+    defaults. *Caught by the agent* while taking admin screenshots for the client report, after it was deployed to
+    trial. *Fix:* separate keys per table (`_emb1`…, `_scr1`…), and a unit test that fails if the two tables share a
+    key. It was verified in the admin by checking both tables and saving the page unchanged. `7c06063`
+
 ## Where the agent went beyond the requirement
 
 Kept, but worth a reviewer's judgement:
