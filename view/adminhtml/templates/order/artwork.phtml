@@ -24,6 +24,7 @@ if (!$rows) {
                     <th><?= $escaper->escapeHtml(__('Item')) ?></th>
                     <th><?= $escaper->escapeHtml(__('SKU')) ?></th>
                     <th><?= $escaper->escapeHtml(__('Location')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Preview')) ?></th>
                     <th><?= $escaper->escapeHtml(__('File')) ?></th>
                     <th><?= $escaper->escapeHtml(__('Size')) ?></th>
                 </tr>
@@ -34,6 +35,21 @@ if (!$rows) {
                         <td><?= $escaper->escapeHtml($row['item']) ?></td>
                         <td><?= $escaper->escapeHtml($row['sku']) ?></td>
                         <td><?= $escaper->escapeHtml($row['location']) ?></td>
+                        <td>
+                            <?php if ($row['thumbnail'] !== null): ?>
+                                <a href="<?= $escaper->escapeUrl($row['url']) ?>">
+                                    <img src="<?= $escaper->escapeUrl($row['thumbnail']) ?>"
+                                         alt="<?= $escaper->escapeHtmlAttr($row['name']) ?>"
+                                         loading="lazy"
+                                         style="display:block;max-width:80px;max-height:80px;
+                                            background:#f0f0f0;border:1px solid #ccc"/>
+                                </a>
+                            <?php else: ?>
+                                <span class="inkthread-decoration-artwork-type">
+                                    <?= $escaper->escapeHtml($row['type']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <a href="<?= $escaper->escapeUrl($row['url']) ?>">
                                 <?= $escaper->escapeHtml($row['name']) ?>

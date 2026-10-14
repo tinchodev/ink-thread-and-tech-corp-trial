@@ -26,6 +26,33 @@
             }
         }
 
+        .inkthread-decoration-preview {
+            align-items: center;
+            display: flex;
+            gap: @indent__s;
+            margin-top: @indent__xs;
+
+            img {
+                background: @color-gray94;
+                border: 1px solid @border-color__base;
+                max-height: 80px;
+                max-width: 80px;
+                object-fit: contain;
+            }
+        }
+
+        .inkthread-decoration-preview-type {
+            border: 1px solid @border-color__base;
+            font-size: @font-size__s;
+            font-weight: @font-weight__bold;
+            padding: @indent__xs @indent__s;
+        }
+
+        .inkthread-decoration-preview-name {
+            font-size: @font-size__s;
+            word-break: break-all;
+        }
+
         .inkthread-decoration-reason {
             font-size: @font-size__s;
             margin-left: 2px;

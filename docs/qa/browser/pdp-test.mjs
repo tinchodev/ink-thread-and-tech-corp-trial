@@ -155,8 +155,24 @@ check('A13 Screen Print: SVG and a missing file are refused client-side, nothing
     s.errors.some((e) => /PNG, JPG or PDF/.test(e)) && s.errors.some((e) => /upload the artwork/.test(e))
         && items.length === 1, JSON.stringify(s.errors));
 
+const preview = (loc) => b.evaluate(`(function () {
+    var p = document.querySelector('#inkthread-decoration-1-details-${loc}-file')
+        .parentNode.querySelector('[data-role="decoration-artwork-preview"]'), img = p.querySelector('img');
+    return {hidden: p.hidden, text: p.textContent.trim(), img: !!img, blob: !!img && img.src.indexOf('blob:') === 0,
+        loaded: !!img && img.complete && img.naturalWidth > 0};
+})()`);
+let pv = await preview('left_chest');
+check('A13b Refused SVG gets no preview', pv.hidden && !pv.img, JSON.stringify(pv));
+
 await file('left_chest', PNG);
 await file('full_back', PDF);
+await b.sleep(300);
+const pngPreview = await preview('left_chest');
+const pdfPreview = await preview('full_back');
+check('A13c PNG previewed as a local blob: image, PDF as type + name',
+    !pngPreview.hidden && pngPreview.blob && pngPreview.loaded && pngPreview.text === 'logo.png'
+        && !pdfPreview.hidden && !pdfPreview.img && pdfPreview.text === 'PDFback.pdf',
+    JSON.stringify([pngPreview, pdfPreview]));
 await b.evaluate(`document.getElementById('qty').value = 3; true`);
 await submit();
 items = await cart();

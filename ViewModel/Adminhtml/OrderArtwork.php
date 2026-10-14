@@ -8,6 +8,7 @@ namespace InkThread\DecorationPricing\ViewModel\Adminhtml;
 
 use InkThread\DecorationPricing\Model\Artwork\ArtworkFile;
 use InkThread\DecorationPricing\Model\Artwork\ArtworkFileMapper;
+use InkThread\DecorationPricing\Model\Artwork\ArtworkThumbnail;
 use InkThread\DecorationPricing\Model\Source\PrintLocation;
 use InkThread\DecorationPricing\Plugin\CopyDecorationToOrderItem;
 use Magento\Backend\Model\UrlInterface;
@@ -20,39 +21,48 @@ use Magento\Sales\Model\Order\Item as OrderItem;
  */
 class OrderArtwork implements ArgumentInterface
 {
+    private const array TYPE_LABELS = ['image/png' => 'PNG', 'image/jpeg' => 'JPG', 'application/pdf' => 'PDF'];
+
     /**
      * @param PrintLocation $printLocation
      * @param UrlInterface $backendUrl
      * @param ArtworkFileMapper $artworkFileMapper
+     * @param ArtworkThumbnail $artworkThumbnail
      */
     public function __construct(
         private readonly PrintLocation $printLocation,
         private readonly UrlInterface $backendUrl,
-        private readonly ArtworkFileMapper $artworkFileMapper
+        private readonly ArtworkFileMapper $artworkFileMapper,
+        private readonly ArtworkThumbnail $artworkThumbnail
     ) {
     }
 
     /**
-     * Rows: item name, SKU, location label, file name, size and download URL.
+     * Rows: item, SKU, location, file name, size, type label, download URL and preview URL (null for PDFs).
      *
      * @param Order $order
-     * @return list<array{item: string, sku: string, location: string, name: string, size: int, url: string}>
+     * @return list<array{
+     *     item: string, sku: string, location: string, name: string, size: int, url: string, type: string,
+     *     thumbnail: ?string
+     * }>
      */
     public function getRows(Order $order): array
     {
         $rows = [];
         foreach ($order->getAllVisibleItems() as $item) {
             foreach ($this->getArtwork($item) as $location => $file) {
+                $params = ['item_id' => $item->getItemId(), 'location' => $location];
                 $rows[] = [
                     'item' => (string)$item->getName(),
                     'sku' => (string)$item->getSku(),
                     'location' => $this->printLocation->getLabel($location),
                     'name' => $file->getName(),
                     'size' => $file->getSize(),
-                    'url' => $this->backendUrl->getUrl(
-                        'inkthread_decoration/artwork/download',
-                        ['item_id' => $item->getItemId(), 'location' => $location]
-                    ),
+                    'url' => $this->backendUrl->getUrl('inkthread_decoration/artwork/download', $params),
+                    'type' => self::TYPE_LABELS[$file->getMimeType()] ?? '',
+                    'thumbnail' => $this->artworkThumbnail->supports($file)
+                        ? $this->backendUrl->getUrl('inkthread_decoration/artwork/thumbnail', $params)
+                        : null,
                 ];
             }
         }

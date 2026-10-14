@@ -1,6 +1,21 @@
 $ vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist --testdox app/code/InkThread/DecorationPricing/Test/Unit
 PHPUnit 9.6.36 by Sebastian Bergmann and contributors.
 
+Artwork Thumbnail (InkThread\DecorationPricing\Test\Unit\Model\Artwork\ArtworkThumbnail)
+ ✔ Large png is scaled down keeping aspect ratio
+ ✔ Small image is not scaled up
+ ✔ Jpeg is re encoded as jpeg
+ ✔ Transparency is kept
+ ✔ No preview for non images with data set "pdf"
+ ✔ No preview for non images with data set "html"
+ ✔ No preview for non images with data set "truncated png"
+ ✔ No preview for non images with data set "empty"
+ ✔ Huge dimensions are refused before decoding
+ ✔ Supports only png and jpeg with data set "png"
+ ✔ Supports only png and jpeg with data set "jpeg"
+ ✔ Supports only png and jpeg with data set "pdf"
+ ✔ Supports only png and jpeg with data set "svg"
+
 Artwork Token (InkThread\DecorationPricing\Test\Unit\Model\Artwork\ArtworkToken)
  ✔ Round trip
  ✔ Tampered token is rejected
@@ -158,6 +173,6 @@ Tier Quantity Resolver (InkThread\DecorationPricing\Test\Unit\Model\TierQuantity
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+47=95"
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+48=96"
 
-Time: 00:00.151, Memory: 14.00 MB
+Time: 00:00.155, Memory: 16.00 MB
 
-OK (139 tests, 238 assertions)
+OK (152 tests, 257 assertions)

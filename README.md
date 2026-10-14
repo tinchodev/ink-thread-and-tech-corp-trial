@@ -13,7 +13,8 @@ The decoration and a per-location breakdown carry from cart to checkout to the p
 **Beyond the brief (requested extension, PLAN.md §10):** with **Embroidery**, each selected location **requires** its
 own text to embroider (≤ 100 chars). With **Screen Print**, each selected location **requires** an artwork file (PNG,
 JPG or PDF, ≤ 10 MB). Only the chosen method's field is shown. The general note stays for both methods. Neither
-changes the fee. Artwork files are listed per item/location with a download link on the admin order view.
+changes the fee. A chosen artwork file is previewed on the product page, and artwork is listed per item/location
+with a thumbnail and a download link on the admin order view.
 
 Tested on Magento Open Source **2.4.7-p9**, PHP **8.3** (required: typed class constants), Luma, with sample data.
 
@@ -76,7 +77,8 @@ On a flagged product page, the **Decoration** block sits above *Qty / Add to Car
    out with the reason next to them, e.g. "Full back (not with Upper back)". After 3 locations the rest are greyed out.
 3. **Per-location detail (required)**, one field per selected location:
    * Embroidery: **text to embroider** (up to 100 characters).
-   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB).
+   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB). A PNG/JPG shows a small preview under the field,
+     a PDF its type and file name. The preview is local to the browser; nothing is uploaded until Add to Cart.
 4. **Decoration note (optional)**, up to 255 characters, for anything that isn't location-specific (e.g. thread colour).
 5. Choose size/colour if needed, set **Qty** and **Add to Cart**.
 
@@ -99,8 +101,8 @@ around it.
 ### 5. Orders
 
 * **Admin** (Sales > Orders > view): each item shows the frozen breakdown. A **Decoration Artwork** table (Information
-  tab, above *Items Ordered*) lists every uploaded file per item and location; the file name downloads it.
-  Downloading needs the *Sales > Operations > Orders > Actions > View* permission.
+  tab, above *Items Ordered*) lists every uploaded file per item and location, with a thumbnail for PNG/JPG ("PDF" for
+  PDFs); the thumbnail or file name downloads it. Viewing and downloading need the *Sales > Operations > Orders > Actions > View* permission.
 * **Customer:** the breakdown appears in My Account > My Orders, guest order lookup, and the confirmation email.
   Invoices, credit memos and invoice PDFs show it too.
 * The order keeps the prices it was placed with: later price-table changes don't alter it.
@@ -146,6 +148,7 @@ Brief worked examples, verified in unit tests and on the storefront: Embroidery,
 | Artwork upload | `Model/Artwork/*`, called from the capture observer | Flat file inputs `inkthread_artwork_<location>` in the add-to-cart form (Luma's AJAX submit already posts `FormData`; the widget sets `multipart/form-data` for a non-AJAX submit). `UploaderFactory` stores the file under `var/inkthread_decoration/artwork/` with a random name, outside the web root. The validator checks size, extension, and the *real* MIME type via `finfo`, so an HTML file renamed `.png` is refused. SVG isn't accepted (scriptable). |
 | Keeping artwork on edit / reorder | encrypted token in the buy request (`ArtworkToken`, Magento encryptor = libsodium AEAD) | The observer writes the stored file back into the buy request as a token before core serialises `info_buyRequest`. The edit page posts it back, so the current file satisfies "required" and a new upload replaces it. Reorder reuses it. A tampered or foreign token is ignored; stored paths are only accepted inside the artwork directory. Request data can never set a path directly (`SelectionFactory::createFromRequestData` vs `createFromStored`). |
 | Artwork download (admin) | `adminhtml` route + `Controller/Adminhtml/Artwork/Download` (ACL `Magento_Sales::actions_view`), block in `order_additional_info` | Served as `application/octet-stream` attachment, never inline. Unknown item/location goes back to the order with an error. |
+| Artwork thumbnails | Product page: `URL.createObjectURL` in the widget (`img-src blob:` in `etc/csp_whitelist.xml`). Admin: `Controller/Adminhtml/Artwork/Thumbnail` + `Model/Artwork/ArtworkThumbnail` (same ACL) | The admin preview is decoded and re-encoded at ≤ 160 px by Magento's GD2 image adapter, so the uploaded bytes are never rendered inline; served with `nosniff`, cached under `var/inkthread_decoration/artwork_thumbnails/`. The header is checked first and images over 40 MP aren't decoded (decompression bombs). No PDF preview (would need Ghostscript); unknown or PDF artwork returns 404. |
 | Pricing core | `Selection`, `SelectionValidator`, `FeeCalculator`, `TierQuantityResolver`, `PriceTableParser` | Plain service classes with no app state, unit-tested in isolation. Plugins and observers are thin adapters around them. |
 | Product page | layout + template + view model + jQuery widget | Fieldset in the add-to-cart form, added to both form containers (with/without product options). The widget disables impossible choices and says why inline. Client validation for UX only; the server is authoritative. CSP-safe: module JS file + `x-magento-init` only, no inline script. |
 
@@ -162,24 +165,25 @@ permission.
 
 | Check | Command | Output |
 |---|---|---|
-| Unit tests (139) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
+| Unit tests (152) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
 | Magento coding standard | `vendor/bin/phpcs --standard=Magento2 --extensions=php,phtml,xml,js,less app/code/InkThread/DecorationPricing` | `docs/checks/phpcs.txt` |
 | Static analysis (level 6; needs `setup:di:compile` first for generated factories) | `vendor/bin/phpstan analyse -c app/code/InkThread/DecorationPricing/phpstan.neon.dist` | `docs/checks/phpstan.txt` |
 | PHP CS Fixer (project config) | `vendor/bin/php-cs-fixer fix app/code/InkThread/DecorationPricing --dry-run` | `docs/checks/php-cs-fixer.txt` |
 | DI compile | `bin/magento setup:di:compile` | `docs/checks/di-compile.txt` |
 | Storefront QA (52 assertions, curl, incl. multipart uploads and required details) | `docs/qa/storefront-qa.sh` | `docs/checks/storefront-qa.txt` |
-| Browser QA (19 checks, headless Chrome, incl. real uploads and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
+| Browser QA (21 checks, headless Chrome, incl. real uploads, previews and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
 | Screenshots (Chaz Kangeroo Hoodie: embroidery, screen print, cart, checkout) | `QA_OUT=docs/screenshots node docs/qa/browser/screenshots.mjs` | `docs/screenshots/` |
 
 Unit tests cover both worked examples, every tier boundary (11/12, 47/48, 23/24, 95/96), pooled boundaries across
 lines (6+5 vs 6+6 …), multi-location sums, all location rules, per-location text rules, required text/artwork per method,
-artwork validation against real PNG/JPEG/PDF/SVG/HTML bytes, file-name sanitising, and artwork tokens against
+artwork validation against real PNG/JPEG/PDF/SVG/HTML bytes, thumbnail scaling/transparency and refusal of PDFs,
+corrupt files and oversized headers, file-name sanitising, and artwork tokens against
 tampering with Magento's real encryptor. Their prices are read from the module's own
 `etc/config.xml`, so they also prove the shipped defaults match the brief. The tests were checked against deliberate
 breakage (tier comparison, back-conflict rule, pooling key): each mutation fails them.
 
 Also verified by hand: admin artwork download (attachment, byte-identical to the upload; a logged-out request gets
-the login page), guest and logged-in orders, guest-cart merge on login, admin and customer order views, guest
+the login page), admin thumbnails (re-encoded image, 404 for PDFs and unknown items, login page when logged out), guest and logged-in orders, guest-cart merge on login, admin and customer order views, guest
 order lookup, confirmation email, invoice, credit memo, invoice PDF, admin price change after ordering, and a
 sample-data cart rule discounting the fee.
 
@@ -206,7 +210,7 @@ sample-data cart rule discounting the fee.
 * No integration/MFTF tests. The Magento-facing adapters (observers, plugins) are covered by the scripted storefront and browser QA, not unit tests.
 * Admin UX is plain dynamic rows; a location × tier matrix grid would be easier to maintain.
 * The fee is not in its own order column, so reporting needs the JSON snapshot.
-* Artwork: no customer-side download link; no cleanup of files from abandoned carts (needs a cron); stored on local
+* Artwork: no customer-side download link or thumbnail (cart, checkout, My Orders show the file name); no cleanup of files from abandoned carts (needs a cron); stored on local
   `var/`, so multi-node or remote storage (S3) setups need a shared or remote filesystem. Files are not virus-scanned.
 
 ## Sandbox notes (not module issues)

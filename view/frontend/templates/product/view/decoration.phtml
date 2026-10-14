@@ -99,6 +99,7 @@ $id = 'inkthread-decoration-' . (int)$product->getId();
                                accept="<?= $escaper->escapeHtmlAttr($viewModel->getArtworkAccept()) ?>"
                                data-validate="{'inkthread-decoration-artwork':true}"
                                data-msg-required="<?= $escaper->escapeHtmlAttr($artworkRequiredMessage) ?>"/>
+                        <div class="inkthread-decoration-preview" data-role="decoration-artwork-preview" hidden></div>
                         <?php if (isset($currentArtwork[$code])): ?>
                             <div class="inkthread-decoration-current">
                                 <?= $escaper->escapeHtml($currentArtwork[$code]['label']) ?>

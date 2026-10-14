@@ -1,3 +1,3 @@
 $ vendor/bin/php-cs-fixer fix app/code/InkThread/DecorationPricing --dry-run
 Loaded config default from "/application/.php-cs-fixer.php".
-Found 0 of 48 files that can be fixed in 0.333 seconds, 110.00 MB memory used
+Found 0 of 51 files that can be fixed in 0.213 seconds, 22.00 MB memory used

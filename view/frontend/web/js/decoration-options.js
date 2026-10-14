@@ -7,6 +7,7 @@
  * - At most N locations; mutually exclusive locations disable each other.
  * A greyed-out location shows its reason inline; valid selections never show a message.
  * Each checked location shows one required field: text for embroidery, an artwork file for screen print.
+ * A chosen artwork file is previewed under its input (image thumbnail for PNG/JPG, type and name for PDF).
  * Hidden fields are disabled, so they are neither validated nor posted.
  */
 define([
@@ -67,7 +68,51 @@ define([
 
             this._on(this.method, {change: this._refresh});
             this._on(this.checkboxes, {change: this._refresh});
+            this._on(this.element.find('input[type="file"]'), {change: this._preview});
             this._refresh();
+        },
+
+        /**
+         * Show the chosen file under its input: a local image preview for PNG/JPG, the file type and name for PDF.
+         * Nothing is uploaded here; the object URL only lives in this page.
+         *
+         * @param {jQuery.Event} event
+         * @private
+         */
+        _preview: function (event) {
+            var input = event.target,
+                preview = $(input).siblings('[data-role="decoration-artwork-preview"]'),
+                file = input.files && input.files[0],
+                config = this.options.artwork,
+                extension = file ? file.name.split('.').pop().toLowerCase() : '',
+                image,
+                label;
+
+            if ($(input).data('inkthreadPreviewUrl')) {
+                URL.revokeObjectURL($(input).data('inkthreadPreviewUrl'));
+                $(input).removeData('inkthreadPreviewUrl');
+            }
+            preview.empty().prop('hidden', true);
+            if (!file || (config.extensions || []).indexOf(extension) === -1 || file.size > config.maxSize) {
+                return;
+            }
+
+            label = document.createElement('span');
+            label.className = 'inkthread-decoration-preview-name';
+            label.textContent = file.name;
+            if (extension === 'pdf') {
+                preview.append($('<span class="inkthread-decoration-preview-type"></span>').text('PDF'));
+            } else {
+                image = document.createElement('img');
+                image.alt = file.name;
+                image.onerror = function () {
+                    $(image).remove();
+                };
+                image.src = URL.createObjectURL(file);
+                $(input).data('inkthreadPreviewUrl', image.src);
+                preview.append(image);
+            }
+            preview.append(label).prop('hidden', false);
         },
 
         /**

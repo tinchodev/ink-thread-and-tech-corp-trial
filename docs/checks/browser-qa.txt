@@ -12,6 +12,8 @@ PASS  A10 Embroidery: only the text field per checked location  -- ["left_chest:
 PASS  A11 Embroidery without texts: required errors, nothing new added  -- ["","This is a required field.","","This is a required field."]
 PASS  A12 Switch to screen print: only the artwork field per checked location  -- ["left_chest:artwork","full_back:artwork"]
 PASS  A13 Screen Print: SVG and a missing file are refused client-side, nothing new added  -- ["","Artwork must be a PNG, JPG or PDF file of at most 10 MB.","","Please upload the artwork for this location."]
+PASS  A13b Refused SVG gets no preview  -- {"hidden":true,"text":"","img":false,"blob":false,"loaded":false}
+PASS  A13c PNG previewed as a local blob: image, PDF as type + name  -- [{"hidden":false,"text":"logo.png","img":true,"blob":true,"loaded":true},{"hidden":false,"text":"PDFback.pdf","img":false,"blob":false,"loaded":false}]
 PASS  A14 Screen Print upload through the real form: artwork per location on the cart line  -- {"sku":"24-MB01","qty":3,"price":40,"options":["Decoration: Screen Print","Left chest: $2.00 / unit · Artwork: logo.png","Full back: $4.00 / unit · Artwork: back.pdf","Decoration fee: $6.00 / unit × 3 = $18.00"]}
 PASS  A15 Embroidery with texts: text per location on the cart line, no artwork  -- {"sku":"24-MB01","qty":3,"price":45.5,"options":["Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Full back: $7.50 / unit · Text: \"TEAM 2026\"","Decoration fee: $11.50 / unit × 3 = $34.50"]}
 PASS  B1 Configurable Black/M x6 embroidery L chest + sleeve with texts: $32 + $7.50  -- {"sku":"MS09-M-Black","qty":6,"price":39.5,"options":["Size: M","Color: Black","Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Sleeve: $3.50 / unit · Text: \"2026\"","Decoration fee: $7.50 / unit × 6 = $45.00"]}
@@ -21,4 +23,4 @@ PASS  D1 No console errors from the module
 INFO  all console errors on visited pages: 0
 INFO  CSP violations on last page: 0
 
-19/19 passed
+21/21 passed

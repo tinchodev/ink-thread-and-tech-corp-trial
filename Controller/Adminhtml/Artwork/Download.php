@@ -14,6 +14,7 @@ use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\Response\Http\FileFactory;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Model\Order\Item as OrderItem;
@@ -51,7 +52,7 @@ class Download extends Action implements HttpGetActionInterface
         $location = (string)$this->getRequest()->getParam('location');
         try {
             $item = $this->orderItemRepository->get((int)$this->getRequest()->getParam('item_id'));
-        } catch (NoSuchEntityException) {
+        } catch (NoSuchEntityException | InputException) {
             return $this->fail((string)__('This order item no longer exists.'));
         }
 
