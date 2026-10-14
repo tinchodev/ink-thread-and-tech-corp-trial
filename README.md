@@ -50,7 +50,11 @@ Only products with **Allow Decoration = Yes** show the decoration options. The d
 
 ### 2. Admin: set the prices
 
-Stores > Configuration > Catalog > **Decoration Pricing** > *Per-unit Price by Print Location* has one table per method
+**Where:** Stores > Configuration > Catalog > **Decoration Pricing**, or directly
+`https://<your-store>/<admin-path>/admin/system_config/edit/section/inkthread_decoration/`. Admin users need the
+*Stores > Settings > Configuration > InkThread Decoration Pricing* permission (User Roles > Role Resources).
+
+The group *Per-unit Price by Print Location* has one table per method
 (**Embroidery**, **Screen Print**). Each row is one tier: *Print location*, *From quantity*, *Unit price* (base
 currency). A row's price applies from its quantity up to the next row's quantity for the same location. Example
 (shipped default, Embroidery, Left chest):
