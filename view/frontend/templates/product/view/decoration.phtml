@@ -101,8 +101,17 @@ $id = 'inkthread-decoration-' . (int)$product->getId();
                                data-msg-required="<?= $escaper->escapeHtmlAttr($artworkRequiredMessage) ?>"/>
                         <div class="inkthread-decoration-preview" data-role="decoration-artwork-preview" hidden></div>
                         <?php if (isset($currentArtwork[$code])): ?>
-                            <div class="inkthread-decoration-current">
-                                <?= $escaper->escapeHtml($currentArtwork[$code]['label']) ?>
+                            <?php $removeLabel = __('Remove %1', $currentArtwork[$code]['name']); ?>
+                            <div class="inkthread-decoration-current" data-role="decoration-artwork-current">
+                                <span class="inkthread-decoration-preview-name">
+                                    <?= $escaper->escapeHtml($currentArtwork[$code]['label']) ?>
+                                </span>
+                                <button type="button"
+                                        class="action inkthread-decoration-remove"
+                                        data-role="decoration-artwork-remove"
+                                        aria-label="<?= $escaper->escapeHtmlAttr($removeLabel) ?>">
+                                    <?= $escaper->escapeHtml(__('Remove')) ?>
+                                </button>
                                 <input type="hidden"
                                        data-role="decoration-artwork-token"
                                        name="<?= $escaper->escapeHtmlAttr($field) ?>[artwork_tokens][<?=

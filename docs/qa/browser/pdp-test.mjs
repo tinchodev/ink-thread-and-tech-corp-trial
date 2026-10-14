@@ -63,9 +63,11 @@ const helpers = (pid) => `
 const state = async () => b.evaluate('__d.state()');
 const cart = async () => b.evaluate(`fetch('/customer/section/load/?sections=cart&force_new_section_timestamp=true')
     .then(r => r.json()).then(d => d.cart.items.map(i => ({sku: i.product_sku, qty: i.qty, price: i.product_price_value,
-        options: i.options.map(o => o.label + ': ' + o.value)})))`);
+        configure: i.configure_url, options: i.options.map(o => o.label + ': ' + o.value)})))`);
 const submit = async () => {
-    await b.evaluate(`document.getElementById('product-addtocart-button').click(); true`);
+    // Add to Cart, or Update Cart on the cart edit page.
+    await b.evaluate(`(document.getElementById('product-addtocart-button')
+        || document.getElementById('product-updatecart-button')).click(); true`);
     await b.sleep(3000);
 };
 
@@ -155,12 +157,23 @@ check('A13 Screen Print: SVG and a missing file are refused client-side, nothing
     s.errors.some((e) => /PNG, JPG or PDF/.test(e)) && s.errors.some((e) => /upload the artwork/.test(e))
         && items.length === 1, JSON.stringify(s.errors));
 
+// Preview row of a location: its parts in order (name, img / type, remove), plus the file input's state.
 const preview = (loc) => b.evaluate(`(function () {
-    var p = document.querySelector('#inkthread-decoration-1-details-${loc}-file')
-        .parentNode.querySelector('[data-role="decoration-artwork-preview"]'), img = p.querySelector('img');
-    return {hidden: p.hidden, text: p.textContent.trim(), img: !!img, blob: !!img && img.src.indexOf('blob:') === 0,
-        loaded: !!img && img.complete && img.naturalWidth > 0};
+    var input = document.querySelector('#inkthread-decoration-1-details-${loc}-file'),
+        p = input.parentNode.querySelector('[data-role="decoration-artwork-preview"]'), img = p.querySelector('img'),
+        current = input.parentNode.querySelector('[data-role="decoration-artwork-current"]');
+    return {hidden: p.hidden, img: !!img, blob: !!img && img.src.indexOf('blob:') === 0,
+        loaded: !!img && img.complete && img.naturalWidth > 0,
+        parts: Array.prototype.map.call(p.children, function (c) {
+            return c.tagName === 'IMG' ? 'img' : c.tagName === 'BUTTON' ? 'remove'
+                : (c.className.indexOf('type') !== -1 ? 'type:' : 'name:') + c.textContent;
+        }),
+        value: input.value, required: input.required,
+        current: current ? current.querySelector('.inkthread-decoration-preview-name').textContent.trim() : null,
+        currentRemove: current ? current.querySelector('button').getAttribute('aria-label') : null};
 })()`);
+const removeArtwork = (loc, which) => b.evaluate(`document.querySelector('#inkthread-decoration-1-details-${loc}-file')
+    .parentNode.querySelector('[data-role="decoration-artwork-${which}"] [data-role="decoration-artwork-remove"]').click(); true`);
 let pv = await preview('left_chest');
 check('A13b Refused SVG gets no preview', pv.hidden && !pv.img, JSON.stringify(pv));
 
@@ -169,10 +182,18 @@ await file('full_back', PDF);
 await b.sleep(300);
 const pngPreview = await preview('left_chest');
 const pdfPreview = await preview('full_back');
-check('A13c PNG previewed as a local blob: image, PDF as type + name',
-    !pngPreview.hidden && pngPreview.blob && pngPreview.loaded && pngPreview.text === 'logo.png'
-        && !pdfPreview.hidden && !pdfPreview.img && pdfPreview.text === 'PDFback.pdf',
+check('A13c Preview row: file name, then a local blob: image (PNG) or the type (PDF), then Remove',
+    !pngPreview.hidden && pngPreview.blob && pngPreview.loaded
+        && JSON.stringify(pngPreview.parts) === '["name:logo.png","img","remove"]'
+        && !pdfPreview.hidden && !pdfPreview.img
+        && JSON.stringify(pdfPreview.parts) === '["name:back.pdf","type:PDF","remove"]',
     JSON.stringify([pngPreview, pdfPreview]));
+
+await removeArtwork('left_chest', 'preview');
+pv = await preview('left_chest');
+check('A13d Remove clears the chosen file in place: preview gone, field empty and required again',
+    pv.hidden && pv.parts.length === 0 && pv.value === '' && pv.required, JSON.stringify(pv));
+await file('left_chest', PNG);
 await b.evaluate(`document.getElementById('qty').value = 3; true`);
 await submit();
 items = await cart();
@@ -191,6 +212,34 @@ check('A15 Embroidery with texts: text per location on the cart line, no artwork
     emb && emb.options.includes('Left chest: $4.00 / unit · Text: "ACME"')
         && emb.options.includes('Full back: $7.50 / unit · Text: "TEAM 2026"')
         && !emb.options.some((o) => /Artwork/.test(o)), JSON.stringify(emb));
+
+// ---- E. Cart edit page of the A14 line: removing the current artwork ----
+await b.goto(art.configure);
+await b.waitFor(`window.require && require.defined && require.defined('jquery') && !!document.getElementById('inkthread-decoration-1')`);
+await b.evaluate(helpers(1));
+await b.waitFor('__d.ready()');
+pv = await preview('left_chest');
+check('E1 Edit page: current artwork shown with its own Remove, field not required',
+    /logo\.png/.test(pv.current) && pv.currentRemove === 'Remove logo.png' && !pv.required, JSON.stringify(pv));
+
+await file('left_chest', PNG);
+await removeArtwork('left_chest', 'preview');
+pv = await preview('left_chest');
+check('E2 Removing a new pick on the edit page keeps the current artwork',
+    pv.hidden && pv.value === '' && /logo\.png/.test(pv.current) && !pv.required, JSON.stringify(pv));
+
+await removeArtwork('left_chest', 'current');
+pv = await preview('left_chest');
+check('E3 Remove on the current artwork drops it in place: field required again', pv.current === null && pv.required,
+    JSON.stringify(pv));
+
+await submit();
+s = await state();
+items = await cart();
+check('E4 Update without a replacement: client error, cart line unchanged',
+    s.errors.some((e) => /upload the artwork/.test(e))
+        && items.some((i) => i.options.includes('Left chest: $2.00 / unit · Artwork: logo.png')),
+    JSON.stringify(s.errors));
 
 // ---- B. Configurable product: Ryker Tee (id 478, $32), Black / M ----
 await b.goto(`${BASE}/ryker-lumatech-trade-tee-crew-neck.html`);

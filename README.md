@@ -77,8 +77,10 @@ On a flagged product page, the **Decoration** block sits above *Qty / Add to Car
    out with the reason next to them, e.g. "Full back (not with Upper back)". After 3 locations the rest are greyed out.
 3. **Per-location detail (required)**, one field per selected location:
    * Embroidery: **text to embroider** (up to 100 characters).
-   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB). A PNG/JPG shows a small preview under the field,
-     a PDF its type and file name. The preview is local to the browser; nothing is uploaded until Add to Cart.
+   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB). Under the field: the file name, a small preview
+     (PNG/JPG) or "PDF", and a **Remove** button that clears it in place. The preview is local to the browser; nothing
+     is uploaded until Add to Cart. On the cart edit page the current artwork has its own Remove (applied on Update
+     Cart; the location then needs a new file).
 4. **Decoration note (optional)**, up to 255 characters, for anything that isn't location-specific (e.g. thread colour).
 5. Choose size/colour if needed, set **Qty** and **Add to Cart**.
 
@@ -171,7 +173,7 @@ permission.
 | PHP CS Fixer (project config) | `vendor/bin/php-cs-fixer fix app/code/InkThread/DecorationPricing --dry-run` | `docs/checks/php-cs-fixer.txt` |
 | DI compile | `bin/magento setup:di:compile` | `docs/checks/di-compile.txt` |
 | Storefront QA (52 assertions, curl, incl. multipart uploads and required details) | `docs/qa/storefront-qa.sh` | `docs/checks/storefront-qa.txt` |
-| Browser QA (21 checks, headless Chrome, incl. real uploads, previews and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
+| Browser QA (26 checks, headless Chrome, incl. real uploads, previews, artwork removal and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
 | Screenshots (Chaz Kangeroo Hoodie: embroidery, screen print, cart, checkout) | `QA_OUT=docs/screenshots node docs/qa/browser/screenshots.mjs` | `docs/screenshots/` |
 
 Unit tests cover both worked examples, every tier boundary (11/12, 47/48, 23/24, 95/96), pooled boundaries across

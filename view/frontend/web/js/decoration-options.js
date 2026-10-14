@@ -7,7 +7,8 @@
  * - At most N locations; mutually exclusive locations disable each other.
  * A greyed-out location shows its reason inline; valid selections never show a message.
  * Each checked location shows one required field: text for embroidery, an artwork file for screen print.
- * A chosen artwork file is previewed under its input (image thumbnail for PNG/JPG, type and name for PDF).
+ * A chosen artwork file is previewed under its input (name, then a thumbnail for PNG/JPG or the type for PDF) with a
+ * Remove button; the current file on the cart edit page can be removed the same way.
  * Hidden fields are disabled, so they are neither validated nor posted.
  */
 define([
@@ -69,12 +70,13 @@ define([
             this._on(this.method, {change: this._refresh});
             this._on(this.checkboxes, {change: this._refresh});
             this._on(this.element.find('input[type="file"]'), {change: this._preview});
+            this._on(this.element, {'click [data-role="decoration-artwork-remove"]': this._removeArtwork});
             this._refresh();
         },
 
         /**
-         * Show the chosen file under its input: a local image preview for PNG/JPG, the file type and name for PDF.
-         * Nothing is uploaded here; the object URL only lives in this page.
+         * Show the chosen file under its input: name, then a local image preview for PNG/JPG or the type for PDF,
+         * then a Remove button. Nothing is uploaded here; the object URL only lives in this page.
          *
          * @param {jQuery.Event} event
          * @private
@@ -100,6 +102,7 @@ define([
             label = document.createElement('span');
             label.className = 'inkthread-decoration-preview-name';
             label.textContent = file.name;
+            preview.append(label);
             if (extension === 'pdf') {
                 preview.append($('<span class="inkthread-decoration-preview-type"></span>').text('PDF'));
             } else {
@@ -112,7 +115,44 @@ define([
                 $(input).data('inkthreadPreviewUrl', image.src);
                 preview.append(image);
             }
-            preview.append(label).prop('hidden', false);
+            preview.append(this._removeButton(file.name)).prop('hidden', false);
+        },
+
+        /**
+         * Remove button for one location's artwork.
+         *
+         * @param {String} name file name, for the accessible label
+         * @returns {jQuery}
+         * @private
+         */
+        _removeButton: function (name) {
+            return $('<button type="button" class="action inkthread-decoration-remove"></button>')
+                .attr('data-role', 'decoration-artwork-remove')
+                .attr('aria-label', $t('Remove %1').replace('%1', name))
+                .text($t('Remove'));
+        },
+
+        /**
+         * Remove a location's artwork in place, without reloading or submitting: clears a newly chosen file, or drops
+         * the current file on the cart edit page (applied when the cart item is updated). The field is then required
+         * again, so the location needs a new file before the item can be added.
+         *
+         * @param {jQuery.Event} event
+         * @private
+         */
+        _removeArtwork: function (event) {
+            var button = $(event.currentTarget),
+                current = button.closest('[data-role="decoration-artwork-current"]'),
+                input = button.closest('.control').find('input[type="file"]');
+
+            if (current.length) {
+                current.remove();
+            } else {
+                input.val('');
+                this._preview({target: input[0]});
+            }
+            this._refresh();
+            input.trigger('focus');
         },
 
         /**
