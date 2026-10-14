@@ -182,11 +182,11 @@ await file('full_back', PDF);
 await b.sleep(300);
 const pngPreview = await preview('left_chest');
 const pdfPreview = await preview('full_back');
-check('A13c Preview row: file name, then a local blob: image (PNG) or the type (PDF), then Remove',
+check('A13c Preview row: a local blob: image (PNG) or the type (PDF), then Remove; no duplicate file name',
     !pngPreview.hidden && pngPreview.blob && pngPreview.loaded
-        && JSON.stringify(pngPreview.parts) === '["name:logo.png","img","remove"]'
+        && JSON.stringify(pngPreview.parts) === '["img","remove"]'
         && !pdfPreview.hidden && !pdfPreview.img
-        && JSON.stringify(pdfPreview.parts) === '["name:back.pdf","type:PDF","remove"]',
+        && JSON.stringify(pdfPreview.parts) === '["type:PDF","remove"]',
     JSON.stringify([pngPreview, pdfPreview]));
 
 await removeArtwork('left_chest', 'preview');

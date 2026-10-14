@@ -77,8 +77,8 @@ On a flagged product page, the **Decoration** block sits above *Qty / Add to Car
    out with the reason next to them, e.g. "Full back (not with Upper back)". After 3 locations the rest are greyed out.
 3. **Per-location detail (required)**, one field per selected location:
    * Embroidery: **text to embroider** (up to 100 characters).
-   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB). Under the field: the file name, a small preview
-     (PNG/JPG) or "PDF", and a **Remove** button that clears it in place. The preview is local to the browser; nothing
+   * Screen Print: **artwork file** (PNG, JPG or PDF, up to 10 MB). Under the field: a small preview (PNG/JPG) or
+     "PDF", and a **Remove** button that clears it in place. The preview is local to the browser; nothing
      is uploaded until Add to Cart. On the cart edit page the current artwork has its own Remove (applied on Update
      Cart; the location then needs a new file).
 4. **Decoration note (optional)**, up to 255 characters, for anything that isn't location-specific (e.g. thread colour).

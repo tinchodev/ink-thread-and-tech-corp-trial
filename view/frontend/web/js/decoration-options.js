@@ -7,8 +7,8 @@
  * - At most N locations; mutually exclusive locations disable each other.
  * A greyed-out location shows its reason inline; valid selections never show a message.
  * Each checked location shows one required field: text for embroidery, an artwork file for screen print.
- * A chosen artwork file is previewed under its input (name, then a thumbnail for PNG/JPG or the type for PDF) with a
- * Remove button; the current file on the cart edit page can be removed the same way.
+ * A chosen artwork file is previewed under its input (a thumbnail for PNG/JPG or the type for PDF) with a Remove
+ * button; the current file on the cart edit page can be removed the same way.
  * Hidden fields are disabled, so they are neither validated nor posted.
  */
 define([
@@ -75,8 +75,9 @@ define([
         },
 
         /**
-         * Show the chosen file under its input: name, then a local image preview for PNG/JPG or the type for PDF,
-         * then a Remove button. Nothing is uploaded here; the object URL only lives in this page.
+         * Show the chosen file under its input: a local image preview for PNG/JPG or the type for PDF, then a Remove
+         * button (the file input already shows the name). Nothing is uploaded here; the object URL only lives in this
+         * page.
          *
          * @param {jQuery.Event} event
          * @private
@@ -87,8 +88,7 @@ define([
                 file = input.files && input.files[0],
                 config = this.options.artwork,
                 extension = file ? file.name.split('.').pop().toLowerCase() : '',
-                image,
-                label;
+                image;
 
             if ($(input).data('inkthreadPreviewUrl')) {
                 URL.revokeObjectURL($(input).data('inkthreadPreviewUrl'));
@@ -99,10 +99,6 @@ define([
                 return;
             }
 
-            label = document.createElement('span');
-            label.className = 'inkthread-decoration-preview-name';
-            label.textContent = file.name;
-            preview.append(label);
             if (extension === 'pdf') {
                 preview.append($('<span class="inkthread-decoration-preview-type"></span>').text('PDF'));
             } else {
