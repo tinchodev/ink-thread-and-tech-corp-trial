@@ -1,13 +1,17 @@
 $ node docs/qa/browser/pdp-test.mjs   (headless Chrome)
 PASS  A1 method None: all locations and note disabled  -- {"left_chest":true,"right_chest":true,"sleeve":true,"upper_back":true,"full_back":true}
+PASS  P1 No decoration: product price unchanged  -- $34.00
 PASS  A2 Embroidery: all locations enabled, note enabled
 PASS  A3 Upper back checked: Full back disabled, reason shown inline, no banner  -- {"full_back":"(not with Upper back)"}
 PASS  A4 Three checked: remaining location disabled, no extra message  -- {"full_back":"(not with Upper back)"}
 PASS  A5 Unchecked all: Full back enabled again, no reasons
 PASS  A6 Submit with method but no location: client error, nothing added  -- ["","Please choose at least one print location."]
 PASS  A7 Note with "<": client error, nothing added  -- ["","The decoration note cannot contain the characters < or >."]
-PASS  A8 Valid submit: added at $34 + $4.00 (screen print full back + artwork, 12 units)  -- {"sku":"24-MB01","qty":12,"price":38,"configure":"https://magento.test/checkout/cart/configure/id/502/product_id/1/","options":["Decoration: Screen Print","Full back: $4.00 / unit · Artwork: logo.png","Decoration fee: $4.00 / unit × 12 = $48.00","Decoration note: Logo v2 & \"white\""]}
+PASS  A8 Valid submit: added at $34 + $4.00 (screen print full back + artwork, 12 units)  -- {"sku":"24-MB01","qty":12,"price":38,"configure":"https://magento.test/checkout/cart/configure/id/532/product_id/1/","options":["Decoration: Screen Print","Full back: $4.00 / unit · Artwork: logo.png","Decoration fee: $4.00 / unit × 12 = $48.00","Decoration note: Logo v2 & \"white\""]}
+PASS  P2 Product price before Add to Cart equals the cart unit price ($38.00)  -- $38.00
 PASS  A9 Back to None: locations cleared and disabled
+PASS  P3 Back to None: product price back to $34.00  -- $34.00
+PASS  P4 Embroidery L chest + sleeve: qty 1 / 12 / 48 re-tier the price, unticking sleeve drops its fee  -- ["$41.50","$40.00","$38.50","$36.50"]
 PASS  A10 Embroidery: only the text field per checked location  -- ["left_chest:text","full_back:text"]
 PASS  A11 Embroidery without texts: required errors, nothing new added  -- ["","This is a required field.","","This is a required field."]
 PASS  A12 Switch to screen print: only the artwork field per checked location  -- ["left_chest:artwork","full_back:artwork"]
@@ -15,17 +19,19 @@ PASS  A13 Screen Print: SVG and a missing file are refused client-side, nothing 
 PASS  A13b Refused SVG gets no preview  -- {"hidden":true,"img":false,"blob":false,"loaded":false,"parts":[],"value":"C:\\fakepath\\logo.svg","required":true,"current":null,"currentRemove":null}
 PASS  A13c Preview row: a local blob: image (PNG) or the type (PDF), then Remove; no duplicate file name  -- [{"hidden":false,"img":true,"blob":true,"loaded":true,"parts":["img","remove"],"value":"C:\\fakepath\\logo.png","required":true,"current":null,"currentRemove":null},{"hidden":false,"img":false,"blob":false,"loaded":false,"parts":["type:PDF","remove"],"value":"C:\\fakepath\\back.pdf","required":true,"current":null,"currentRemove":null}]
 PASS  A13d Remove clears the chosen file in place: preview gone, field empty and required again  -- {"hidden":true,"img":false,"blob":false,"loaded":false,"parts":[],"value":"","required":true,"current":null,"currentRemove":null}
-PASS  A14 Screen Print upload through the real form: artwork per location on the cart line  -- {"sku":"24-MB01","qty":3,"price":40,"configure":"https://magento.test/checkout/cart/configure/id/503/product_id/1/","options":["Decoration: Screen Print","Left chest: $2.00 / unit · Artwork: logo.png","Full back: $4.00 / unit · Artwork: back.pdf","Decoration fee: $6.00 / unit × 3 = $18.00"]}
-PASS  A15 Embroidery with texts: text per location on the cart line, no artwork  -- {"sku":"24-MB01","qty":3,"price":45.5,"configure":"https://magento.test/checkout/cart/configure/id/504/product_id/1/","options":["Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Full back: $7.50 / unit · Text: \"TEAM 2026\"","Decoration fee: $11.50 / unit × 3 = $34.50"]}
+PASS  A14 Screen Print upload through the real form: artwork per location on the cart line  -- {"sku":"24-MB01","qty":3,"price":40,"configure":"https://magento.test/checkout/cart/configure/id/533/product_id/1/","options":["Decoration: Screen Print","Left chest: $2.00 / unit · Artwork: logo.png","Full back: $4.00 / unit · Artwork: back.pdf","Decoration fee: $6.00 / unit × 3 = $18.00"]}
+PASS  A15 Embroidery with texts: text per location on the cart line, no artwork  -- {"sku":"24-MB01","qty":3,"price":45.5,"configure":"https://magento.test/checkout/cart/configure/id/534/product_id/1/","options":["Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Full back: $7.50 / unit · Text: \"TEAM 2026\"","Decoration fee: $11.50 / unit × 3 = $34.50"]}
+PASS  P5 Edit page opens with the fee in the price (screen print L chest + full back, qty 3: $34 + $6.00)  -- $40.00
 PASS  E1 Edit page: current artwork shown with its own Remove, field not required  -- {"hidden":true,"img":false,"blob":false,"loaded":false,"parts":[],"value":"","required":false,"current":"Current artwork: logo.png (upload a file to replace it)","currentRemove":"Remove logo.png"}
 PASS  E2 Removing a new pick on the edit page keeps the current artwork  -- {"hidden":true,"img":false,"blob":false,"loaded":false,"parts":[],"value":"","required":false,"current":"Current artwork: logo.png (upload a file to replace it)","currentRemove":"Remove logo.png"}
 PASS  E3 Remove on the current artwork drops it in place: field required again  -- {"hidden":true,"img":false,"blob":false,"loaded":false,"parts":[],"value":"","required":true,"current":null,"currentRemove":null}
 PASS  E4 Update without a replacement: client error, cart line unchanged  -- ["","Please upload the artwork for this location."]
-PASS  B1 Configurable Black/M x6 embroidery L chest + sleeve with texts: $32 + $7.50  -- {"sku":"MS09-M-Black","qty":6,"price":39.5,"configure":"https://magento.test/checkout/cart/configure/id/505/product_id/478/","options":["Size: M","Color: Black","Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Sleeve: $3.50 / unit · Text: \"2026\"","Decoration fee: $7.50 / unit × 6 = $45.00"]}
+PASS  B1 Configurable Black/M x6 embroidery L chest + sleeve with texts: $32 + $7.50  -- {"sku":"MS09-M-Black","qty":6,"price":39.5,"configure":"https://magento.test/checkout/cart/configure/id/535/product_id/478/","options":["Size: M","Color: Black","Decoration: Embroidery","Left chest: $4.00 / unit · Text: \"ACME\"","Sleeve: $3.50 / unit · Text: \"2026\"","Decoration fee: $7.50 / unit × 6 = $45.00"]}
+PASS  P6 Configurable: product price after choosing size/colour includes the fee, same as the cart ($39.50)  -- $39.50
 PASS  C1 Cart page shows the breakdown for every decorated line (4)
 PASS  C2 Checkout summary shows decoration lines  -- Order Summary 24 Items in Cart Joust Duffle Bag Qty12 $456.00 View Details Decoration Screen Print Full back $4.00 / unit · Artwork: logo.png Decoration fee $4.00 / unit × 12 = $48.00 Decoration note Logo v2 & "white" Joust Duffle Bag Qty3 $120.00 View Details Decoration Screen Print Left chest $2.0
 PASS  D1 No console errors from the module
 INFO  all console errors on visited pages: 0
 INFO  CSP violations on last page: 0
 
-26/26 passed
+32/32 passed

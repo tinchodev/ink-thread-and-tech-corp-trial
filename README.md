@@ -8,7 +8,8 @@
 
 Lets a customer choose a decoration method (None / Embroidery / Screen Print), 1–3 print locations and an optional
 note on a product, and prices the decoration per unit by method, location and quantity tier. Prices are set in admin.
-The decoration and a per-location breakdown carry from cart to checkout to the placed order.
+The product page price includes the decoration fee as the customer chooses it, and the decoration and a per-location
+breakdown carry from cart to checkout to the placed order.
 
 **Beyond the brief (requested extension, PLAN.md §10):** with **Embroidery**, each selected location **requires** its
 own text to embroider (≤ 100 chars). With **Screen Print**, each selected location **requires** an artwork file (PNG,
@@ -84,6 +85,11 @@ On a flagged product page, the **Decoration** block sits above *Qty / Add to Car
 4. **Decoration note (optional)**, up to 255 characters, for anything that isn't location-specific (e.g. thread colour).
 5. Choose size/colour if needed, set **Qty** and **Add to Cart**.
 
+The **product price** at the top of the page includes the decoration fee per unit for the quantity entered, and
+updates as the method, locations, quantity or size/colour change. It is the unit price the cart line will show. Only
+the cart knows about other lines, so a tier reached by pooling matching cart lines (see below) shows there, at a lower
+price.
+
 Text and notes can't contain `<` or `>`. Every rule is also checked on the server, so a crafted request can't get
 around it.
 
@@ -152,6 +158,7 @@ Brief worked examples, verified in unit tests and on the storefront: Embroidery,
 | Artwork download (admin) | `adminhtml` route + `Controller/Adminhtml/Artwork/Download` (ACL `Magento_Sales::actions_view`), block in `order_additional_info` | Served as `application/octet-stream` attachment, never inline. Unknown item/location goes back to the order with an error. |
 | Artwork thumbnails | Product page: `URL.createObjectURL` in the widget (`img-src blob:` in `etc/csp_whitelist.xml`). Admin: `Controller/Adminhtml/Artwork/Thumbnail` + `Model/Artwork/ArtworkThumbnail` (same ACL) | The admin preview is decoded and re-encoded at ≤ 160 px by Magento's GD2 image adapter, so the uploaded bytes are never rendered inline; served with `nosniff`, cached under `var/inkthread_decoration/artwork_thumbnails/`. The header is checked first and images over 40 MP aren't decoded (decompression bombs). No PDF preview (would need Ghostscript); unknown or PDF artwork returns 404. |
 | Pricing core | `Selection`, `SelectionValidator`, `FeeCalculator`, `TierQuantityResolver`, `PriceTableParser` | Plain service classes with no app state, unit-tested in isolation. Plugins and observers are thin adapters around them. |
+| Product page price | the widget adds the fee to Luma's price box (`updatePrice` with its own key, as core custom options do) | The view model passes the price tiers, converted to the display currency, to the widget, which sums the checked locations' tier prices at the entered qty. Core's own adjustments (configurable child price, catalog tier price) stay separate and add up. Prices that include tax get the fee scaled by the product's displayed incl./excl. tax ratio. Display only: the server still prices the cart line. Rejected: an AJAX price endpoint (a request per change, and product pages are full-page cached). |
 | Product page | layout + template + view model + jQuery widget | Fieldset in the add-to-cart form, added to both form containers (with/without product options). The widget disables impossible choices and says why inline. Client validation for UX only; the server is authoritative. CSP-safe: module JS file + `x-magento-init` only, no inline script. |
 
 ### Security
@@ -167,19 +174,19 @@ permission.
 
 | Check | Command | Output |
 |---|---|---|
-| Unit tests (152) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
+| Unit tests (155) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
 | Magento coding standard | `vendor/bin/phpcs --standard=Magento2 --extensions=php,phtml,xml,js,less app/code/InkThread/DecorationPricing` | `docs/checks/phpcs.txt` |
 | Static analysis (level 6; needs `setup:di:compile` first for generated factories) | `vendor/bin/phpstan analyse -c app/code/InkThread/DecorationPricing/phpstan.neon.dist` | `docs/checks/phpstan.txt` |
 | PHP CS Fixer (project config) | `vendor/bin/php-cs-fixer fix app/code/InkThread/DecorationPricing --dry-run` | `docs/checks/php-cs-fixer.txt` |
 | DI compile | `bin/magento setup:di:compile` | `docs/checks/di-compile.txt` |
 | Storefront QA (52 assertions, curl, incl. multipart uploads and required details) | `docs/qa/storefront-qa.sh` | `docs/checks/storefront-qa.txt` |
-| Browser QA (26 checks, headless Chrome, incl. real uploads, previews, artwork removal and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
+| Browser QA (32 checks, headless Chrome, incl. the product page price, real uploads, previews, artwork removal and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
 | Screenshots (Chaz Kangeroo Hoodie: embroidery, screen print, cart, checkout) | `QA_OUT=docs/screenshots node docs/qa/browser/screenshots.mjs` | `docs/screenshots/` |
 
 Unit tests cover both worked examples, every tier boundary (11/12, 47/48, 23/24, 95/96), pooled boundaries across
 lines (6+5 vs 6+6 …), multi-location sums, all location rules, per-location text rules, required text/artwork per method,
 artwork validation against real PNG/JPEG/PDF/SVG/HTML bytes, thumbnail scaling/transparency and refusal of PDFs,
-corrupt files and oversized headers, file-name sanitising, and artwork tokens against
+corrupt files and oversized headers, the product page price tiers (shipped prices, currency conversion), file-name sanitising, and artwork tokens against
 tampering with Magento's real encryptor. Their prices are read from the module's own
 `etc/config.xml`, so they also prove the shipped defaults match the brief. The tests were checked against deliberate
 breakage (tier comparison, back-conflict rule, pooling key): each mutation fails them.
@@ -210,6 +217,9 @@ sample-data cart rule discounting the fee.
 * Multi-address checkout, bundle products, grouped products, wishlist with decoration: untested or unsupported.
 * Per-website/store pricing and multi-currency (single store by client decision; prices are base currency).
 * No integration/MFTF tests. The Magento-facing adapters (observers, plugins) are covered by the scripted storefront and browser QA, not unit tests.
+* The product page price is the single line's price: it can't see the cart, so a cheaper pooled tier only shows in the
+  cart. With prices shown including tax, the fee is scaled by the product's own tax ratio (correct for one tax rate per
+  product, the usual case).
 * Admin UX is plain dynamic rows; a location × tier matrix grid would be easier to maintain.
 * The fee is not in its own order column, so reporting needs the JSON snapshot.
 * Artwork: no customer-side download link or thumbnail (cart, checkout, My Orders show the file name); no cleanup of files from abandoned carts (needs a cron); stored on local

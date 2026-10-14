@@ -173,6 +173,11 @@ Tier Quantity Resolver (InkThread\DecorationPricing\Test\Unit\Model\TierQuantity
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+47=95"
  ✔ Pooled boundaries are priced at the pooled tier with data set "screen 48+48=96"
 
-Time: 00:00.155, Memory: 16.00 MB
+Decoration Options (InkThread\DecorationPricing\Test\Unit\ViewModel\DecorationOptions)
+ ✔ Js config carries shipped tiers for the price box
+ ✔ Tier prices are converted to the display currency
+ ✔ Unpriced locations are neither offered nor priced
 
-OK (152 tests, 257 assertions)
+Time: 00:00.172, Memory: 16.00 MB
+
+OK (155 tests, 263 assertions)

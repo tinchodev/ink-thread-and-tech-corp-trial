@@ -277,3 +277,21 @@ Added after the core build, as extra effort within the time cap. **Planning deci
 - **Tests:** unit tests for parsing/validation of per-location text, artwork validation, token tamper rejection and
   formatter output. The storefront QA script gets multipart uploads, and the browser QA gets file inputs.
 - **Not included:** customer-side download link, cleanup of files from abandoned carts (cron), remote storage (S3).
+
+## 11. Client request after delivery: decoration fee in the product page price
+
+**Client:** the decoration price should show in the product price on the product page, as it does in the cart.
+
+- The widget adds the per-unit fee to Luma's price box (`updatePrice` under its own key, the way core custom options
+  and configurable swatches adjust it), so the price at the top of the page equals the cart line's unit price
+  (product price + fee).
+- The fee is the sum of each checked location's tier price at the **quantity entered**. The tiers come from the same
+  price tables (view model JSON config, converted to the display currency). It updates on method, location, qty and
+  size/colour changes, and on the cart edit page it opens with the current selection's fee.
+- **Display only:** the server still prices the cart line (§2.1). The product page can't see the cart, so a tier
+  reached by pooling matching cart lines (§2.0) shows only in the cart, at a lower price. The note under the fieldset
+  says so.
+- Rejected: an AJAX price endpoint (a request per change, and product pages are full-page cached).
+- This replaces "Live fee preview on the product page" in §9.
+- **Tests:** view model config unit tests; browser QA P1–P6 (price per tier, back to None, edit page, configurable,
+  and product price = cart unit price).

@@ -10,6 +10,8 @@
  * A chosen artwork file is previewed under its input (a thumbnail for PNG/JPG or the type for PDF) with a Remove
  * button; the current file on the cart edit page can be removed the same way.
  * Hidden fields are disabled, so they are neither validated nor posted.
+ * The product price shows the decoration fee per unit for the entered quantity, as the cart's unit price does
+ * (pooling with matching cart lines can only lower it in the cart).
  */
 define([
     'jquery',
@@ -54,7 +56,9 @@ define([
             labels: {},
             artwork: {},
             textMethods: [],
-            artworkMethods: []
+            artworkMethods: [],
+            priceTables: {},
+            priceBoxSelector: '[data-role="priceBox"]'
         },
 
         /** @inheritdoc */
@@ -63,6 +67,10 @@ define([
             this.checkboxes = this.element.find('[data-role="decoration-locations"] input[type="checkbox"]');
             this.note = this.element.find('[data-role="decoration-note"]');
             this.details = this.element.find('[data-role="decoration-detail"]');
+            this.qty = this.element.closest('form').find('input[name="qty"]');
+            this.priceBox = $(this.options.priceBoxSelector).filter(
+                '[data-product-id="' + this.element.closest('form').find('input[name="product"]').val() + '"]'
+            ).first();
             this.element.data('inkthreadArtwork', this.options.artwork);
             // Luma only sets multipart when the product has native file options; needed for a non-AJAX submit.
             this.element.closest('form').attr('enctype', 'multipart/form-data');
@@ -71,7 +79,57 @@ define([
             this._on(this.checkboxes, {change: this._refresh});
             this._on(this.element.find('input[type="file"]'), {change: this._preview});
             this._on(this.element, {'click [data-role="decoration-artwork-remove"]': this._removeArtwork});
+            this._on(this.qty, {input: this._updatePrice, change: this._updatePrice});
+            // The price box may initialise after this widget; its own first update then includes the fee.
+            this._on(this.priceBox, {'price-box-initialized': this._updatePrice});
             this._refresh();
+        },
+
+        /**
+         * Per-unit decoration fee for the current selection and quantity: the sum of each checked location's tier
+         * price. A location with no tier for the quantity adds nothing here; add to cart then refuses it.
+         *
+         * @returns {Number}
+         * @private
+         */
+        _fee: function () {
+            var tables = this.options.priceTables[this.method.val()] || {},
+                qty = parseFloat(this.qty.val()) > 0 ? parseFloat(this.qty.val()) : 1;
+
+            return this.checkboxes.filter(':checked').get().reduce(function (fee, checkbox) {
+                var price = null;
+
+                (tables[checkbox.value] || []).forEach(function (tier) {
+                    if (qty >= tier.min_qty) {
+                        price = tier.price;
+                    }
+                });
+
+                return price === null ? fee : fee + price;
+            }, 0);
+        },
+
+        /**
+         * Add the fee to the product price box, alongside core's own adjustments (configurable child, tier price).
+         * Prices that include tax get the fee scaled by the product's displayed tax ratio.
+         *
+         * @private
+         */
+        _updatePrice: function () {
+            var prices, ratio, fee, changes = {};
+
+            if (!this.priceBox.length || !this.priceBox.data('magePriceBox')) {
+                return;
+            }
+            prices = this.priceBox.priceBox('option').prices || {};
+            ratio = prices.basePrice && prices.basePrice.amount > 0 && prices.finalPrice
+                ? prices.finalPrice.amount / prices.basePrice.amount
+                : 1;
+            fee = this._fee();
+            Object.keys(prices).forEach(function (code) {
+                changes[code] = {amount: code.indexOf('base') === 0 ? fee : fee * ratio};
+            });
+            this.priceBox.trigger('updatePrice', {inkthreadDecoration: changes});
         },
 
         /**
@@ -220,6 +278,7 @@ define([
                 );
             }.bind(this));
 
+            this._updatePrice();
             this.note.prop('disabled', !decorated);
             this.element.find('[data-role="decoration-locations"], [data-role="decoration-note-field"]')
                 .toggleClass('_disabled', !decorated);

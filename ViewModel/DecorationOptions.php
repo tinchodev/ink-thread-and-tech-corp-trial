@@ -19,6 +19,7 @@ use InkThread\DecorationPricing\Model\Source\PrintLocation;
 use InkThread\DecorationPricing\Observer\CaptureDecorationSelection;
 use InkThread\DecorationPricing\Setup\Patch\Data\AddDecorationEnabledAttribute;
 use Magento\Catalog\Model\Product;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 
@@ -34,6 +35,7 @@ class DecorationOptions implements ArgumentInterface
      * @param SelectionFactory $selectionFactory
      * @param ArtworkToken $artworkToken
      * @param Json $json
+     * @param PriceCurrencyInterface $priceCurrency
      */
     public function __construct(
         private readonly DecorationMethod $decorationMethod,
@@ -41,7 +43,8 @@ class DecorationOptions implements ArgumentInterface
         private readonly PriceTableProviderInterface $priceTableProvider,
         private readonly SelectionFactory $selectionFactory,
         private readonly ArtworkToken $artworkToken,
-        private readonly Json $json
+        private readonly Json $json,
+        private readonly PriceCurrencyInterface $priceCurrency
     ) {
     }
 
@@ -165,19 +168,29 @@ class DecorationOptions implements ArgumentInterface
     }
 
     /**
-     * Widget config: limits, rules and which locations each method offers.
+     * Widget config: limits, rules, which locations each method offers and their price tiers.
      *
-     * Locations without a price table are disabled instead of failing on add to cart.
+     * Locations without a price table are disabled instead of failing on add to cart. The tiers (converted to the
+     * display currency) let the product page price show the fee for the entered quantity; the cart stays authoritative.
      *
      * @return string
      */
     public function getJsConfig(): string
     {
         $offered = [];
+        $priceTables = [];
         foreach ($this->decorationMethod->getPricedMethods() as $method) {
             foreach (array_keys($this->printLocation->getLabels()) as $location) {
-                if ($this->priceTableProvider->getTiers($method, $location)) {
+                $tiers = $this->priceTableProvider->getTiers($method, $location);
+                if ($tiers) {
                     $offered[$method][] = $location;
+                    $priceTables[$method][$location] = array_map(
+                        fn (array $tier): array => [
+                            'min_qty' => $tier['min_qty'],
+                            'price' => (float)$this->priceCurrency->convert($tier['price']),
+                        ],
+                        $tiers
+                    );
                 }
             }
         }
@@ -187,6 +200,7 @@ class DecorationOptions implements ArgumentInterface
             'maxLocations' => SelectionValidator::MAX_LOCATIONS,
             'exclusivePairs' => SelectionValidator::EXCLUSIVE_PAIRS,
             'offeredLocations' => $offered,
+            'priceTables' => $priceTables,
             'messages' => [
                 // Shown next to a greyed-out location to say why; not an error about the current choice.
                 'exclusive' => (string)__('(not with %1)'),

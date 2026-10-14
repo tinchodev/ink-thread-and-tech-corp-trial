@@ -34,6 +34,12 @@ const helpers = (pid) => `
             method: function (v) { root.find('[data-role=decoration-method]').val(v).trigger('change'); },
             click: function (loc) { root.find('input[value=' + loc + ']')[0].click(); },
             note: function (v) { root.find('[data-role=decoration-note]').val(v); },
+            qty: function (v) { $('#qty').val(v).trigger('input'); },
+            // Displayed product price; null until the price box has initialised.
+            price: function () {
+                var box = $('.product-info-main [data-role=priceBox]').first();
+                return box.data('magePriceBox') ? box.find('[data-price-type=finalPrice] .price').first().text() : null;
+            },
             state: function () {
                 var s = {disabled: {}, checked: []};
                 root.find('input[type=checkbox]').each(function () {
@@ -80,6 +86,8 @@ await b.waitFor('__d.ready()');
 let s = await state();
 check('A1 method None: all locations and note disabled',
     Object.values(s.disabled).every(Boolean) && s.noteDisabled, JSON.stringify(s.disabled));
+const price = async () => b.evaluate('__d.price()');
+check('P1 No decoration: product price unchanged', await price() === '$34.00', await price());
 
 await b.evaluate(`__d.method('embroidery')`);
 s = await state();
@@ -120,15 +128,33 @@ check('A7 Note with "<": client error, nothing added',
     s.errors.some((e) => /cannot contain the characters/.test(e)) && items.length === 0, JSON.stringify(s.errors));
 
 await b.evaluate(`__d.note('Logo v2 & "white"'); true`);
+const shownPrice = await price();
 await submit();
 items = await cart();
 const bag = items.find((i) => i.sku === '24-MB01');
 check('A8 Valid submit: added at $34 + $4.00 (screen print full back + artwork, 12 units)',
     bag && bag.qty === 12 && Math.abs(bag.price - 38) < 0.001, JSON.stringify(bag));
+check('P2 Product price before Add to Cart equals the cart unit price ($38.00)',
+    shownPrice === '$38.00' && bag && Math.abs(bag.price - 38) < 0.001, shownPrice);
 
 await b.evaluate(`__d.method('none')`);
 s = await state();
 check('A9 Back to None: locations cleared and disabled', s.checked.length === 0 && Object.values(s.disabled).every(Boolean));
+check('P3 Back to None: product price back to $34.00', await price() === '$34.00', await price());
+
+// ---- P. Product price follows method, locations and qty (fee per unit at the entered qty) ----
+const prices = [];
+await b.evaluate(`__d.method('embroidery'); __d.click('left_chest'); __d.click('sleeve'); __d.qty(1); true`);
+prices.push(await price());
+await b.evaluate(`__d.qty(12); true`);
+prices.push(await price());
+await b.evaluate(`__d.qty(48); true`);
+prices.push(await price());
+await b.evaluate(`__d.click('sleeve'); true`);
+prices.push(await price());
+check('P4 Embroidery L chest + sleeve: qty 1 / 12 / 48 re-tier the price, unticking sleeve drops its fee',
+    JSON.stringify(prices) === JSON.stringify(['$41.50', '$40.00', '$38.50', '$36.50']), JSON.stringify(prices));
+await b.evaluate(`__d.method('none'); __d.qty(12); true`);
 
 // ---- A10-A14. Required per-location details: text for embroidery, artwork for screen print ----
 await b.evaluate(`__d.method('embroidery'); __d.click('left_chest'); __d.click('full_back'); __d.note(''); true`);
@@ -218,6 +244,9 @@ await b.goto(art.configure);
 await b.waitFor(`window.require && require.defined && require.defined('jquery') && !!document.getElementById('inkthread-decoration-1')`);
 await b.evaluate(helpers(1));
 await b.waitFor('__d.ready()');
+await b.waitFor('__d.price() !== null');
+check('P5 Edit page opens with the fee in the price (screen print L chest + full back, qty 3: $34 + $6.00)',
+    await price() === '$40.00', await price());
 pv = await preview('left_chest');
 check('E1 Edit page: current artwork shown with its own Remove, field not required',
     /logo\.png/.test(pv.current) && pv.currentRemove === 'Remove logo.png' && !pv.required, JSON.stringify(pv));
@@ -253,11 +282,15 @@ await b.evaluate(`document.querySelector('.swatch-option[data-option-id="49"]').
     document.getElementById('qty').value = 6; true`);
 await text('left_chest', 'ACME');
 await text('sleeve', '2026');
+await b.evaluate(`__d.qty(6); true`);
+const teePrice = await price();
 await submit();
 items = await cart();
 const tee = items.find((i) => i.sku === 'MS09-M-Black');
 check('B1 Configurable Black/M x6 embroidery L chest + sleeve with texts: $32 + $7.50',
     tee && tee.qty === 6 && Math.abs(tee.price - 39.5) < 0.001, JSON.stringify(tee));
+check('P6 Configurable: product price after choosing size/colour includes the fee, same as the cart ($39.50)',
+    teePrice === '$39.50', teePrice);
 
 // ---- C. Cart and checkout pages render the breakdown ----
 await b.goto(`${BASE}/checkout/cart/`);
