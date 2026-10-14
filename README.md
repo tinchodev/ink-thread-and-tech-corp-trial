@@ -48,11 +48,17 @@ Only products with **Allow Decoration = Yes** show the decoration options. The d
   Yes > Save.
 * **Configurable products:** set it on the **parent** (e.g. the hoodie), not on the size/colour children.
 
+The **Decoration** section is near the bottom of the product edit page, below *Gift Options*; it opens when clicked.
+
+![Product edit page: the Decoration section open, with Allow Decoration set to Yes](docs/screenshots/admin-product-allow-decoration.png)
+
 ### 2. Admin: set the prices
 
 **Where:** Stores > Configuration > Catalog > **Decoration Pricing**, or directly
 `https://<your-store>/<admin-path>/admin/system_config/edit/section/inkthread_decoration/`. Admin users need the
 *Stores > Settings > Configuration > InkThread Decoration Pricing* permission (User Roles > Role Resources).
+
+![Stores > Configuration > Catalog > Decoration Pricing: the Embroidery price table](docs/screenshots/admin-price-tables.png)
 
 The group *Per-unit Price by Print Location* has one table per method
 (**Embroidery**, **Screen Print**). Each row is one tier: *Print location*, *From quantity*, *Unit price* (base
@@ -156,7 +162,7 @@ Brief worked examples, verified in unit tests and on the storefront: Embroidery,
 | Cart / minicart / checkout display | `after` plugin on `Catalog\Helper\Product\Configuration::getCustomOptions` | One helper feeds all three (the configurable helper delegates to it). Computed live, so it follows qty changes. |
 | Order persistence | `after` plugin on `Quote\Model\Quote\Item\ToOrderItem::convert` | Frozen snapshot in `product_options`: `inkthread_decoration` (structured) plus `additional_options` (display lines). Core renders those in admin/customer/guest order views, emails, invoices, credit memos and PDFs, with no template overrides. Later price changes never alter placed orders. No new DB columns. Trade-off: the fee isn't SQL-queryable for reports. |
 | Edit prefill | `after` plugin on `Catalog\Model\Product::processBuyRequest` | Core drops non-core buy request keys from the preconfigured values. |
-| Admin prices | `system.xml` dynamic rows (`ArraySerialized`) with a validating backend model | One table per method, own tier boundaries, defaults in `config.xml`. Saving or resetting flags active quotes `trigger_recollect` (as core does for catalog price changes), so open carts never show a stale unit price. Rejected: a custom table + admin grid (better for big matrices, too much UI work for the timebox). Scope is global (single store, client decision). |
+| Admin prices | `system.xml` dynamic rows (`ArraySerialized`) with a validating backend model | One table per method, own tier boundaries, defaults in `config.xml`. Saving or resetting flags active quotes `trigger_recollect` (as core does for catalog price changes), so open carts never show a stale unit price. Rejected: a custom table + admin grid (better for big matrices, too much UI work for the timebox). Scope is global (single store, client decision). The default rows use per-method keys (`_emb1`…, `_scr1`…): the admin uses row keys as HTML ids, so keys shared by the two tables made both show the Screen Print rows (a unit test now guards this). |
 | Artwork upload | `Model/Artwork/*`, called from the capture observer | Flat file inputs `inkthread_artwork_<location>` in the add-to-cart form (Luma's AJAX submit already posts `FormData`; the widget sets `multipart/form-data` for a non-AJAX submit). `UploaderFactory` stores the file under `var/inkthread_decoration/artwork/` with a random name, outside the web root. The validator checks size, extension, and the *real* MIME type via `finfo`, so an HTML file renamed `.png` is refused. SVG isn't accepted (scriptable). |
 | Keeping artwork on edit / reorder | encrypted token in the buy request (`ArtworkToken`, Magento encryptor = libsodium AEAD) | The observer writes the stored file back into the buy request as a token before core serialises `info_buyRequest`. The edit page posts it back, so the current file satisfies "required" and a new upload replaces it. Reorder reuses it. A tampered or foreign token is ignored; stored paths are only accepted inside the artwork directory. Request data can never set a path directly (`SelectionFactory::createFromRequestData` vs `createFromStored`). |
 | Artwork download (admin) | `adminhtml` route + `Controller/Adminhtml/Artwork/Download` (ACL `Magento_Sales::actions_view`), block in `order_additional_info` | Served as `application/octet-stream` attachment, never inline. Unknown item/location goes back to the order with an error. |
@@ -178,14 +184,14 @@ permission.
 
 | Check | Command | Output |
 |---|---|---|
-| Unit tests (155) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
+| Unit tests (156) | `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/InkThread/DecorationPricing/Test/Unit` | `docs/checks/phpunit.txt` |
 | Magento coding standard | `vendor/bin/phpcs --standard=Magento2 --extensions=php,phtml,xml,js,less app/code/InkThread/DecorationPricing` | `docs/checks/phpcs.txt` |
 | Static analysis (level 6; needs `setup:di:compile` first for generated factories) | `vendor/bin/phpstan analyse -c app/code/InkThread/DecorationPricing/phpstan.neon.dist` | `docs/checks/phpstan.txt` |
 | PHP CS Fixer (project config) | `vendor/bin/php-cs-fixer fix app/code/InkThread/DecorationPricing --dry-run` | `docs/checks/php-cs-fixer.txt` |
 | DI compile | `bin/magento setup:di:compile` | `docs/checks/di-compile.txt` |
 | Storefront QA (52 assertions, curl, incl. multipart uploads and required details) | `docs/qa/storefront-qa.sh` | `docs/checks/storefront-qa.txt` |
 | Browser QA (32 checks, headless Chrome, incl. the product page price, real uploads, previews, artwork removal and per-method fields) | `node docs/qa/browser/pdp-test.mjs` | `docs/checks/browser-qa.txt` |
-| Screenshots (Chaz Kangeroo Hoodie: embroidery, screen print, cart, checkout) | `QA_OUT=docs/screenshots node docs/qa/browser/screenshots.mjs` | `docs/screenshots/` |
+| Screenshots (Chaz Kangeroo Hoodie: embroidery, screen print, cart, checkout) | `QA_OUT=docs/screenshots node docs/qa/browser/screenshots.mjs` | `docs/screenshots/` (the two `admin-*.png` were taken separately) |
 
 Unit tests cover both worked examples, every tier boundary (11/12, 47/48, 23/24, 95/96), pooled boundaries across
 lines (6+5 vs 6+6 …), multi-location sums, all location rules, per-location text rules, required text/artwork per method,

@@ -62,6 +62,23 @@ class PriceTableProviderTest extends TestCase
         $this->assertSame([], $this->priceTableProvider->getTiers('embroidery', 'full_back'));
     }
 
+    /**
+     * The admin's dynamic rows use each row key as an HTML id, so two tables on one page must not share keys:
+     * otherwise the second table's values show in the first, and saving the page stores them there.
+     */
+    public function testShippedPriceTablesUseDistinctRowKeys(): void
+    {
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
+        $config = simplexml_load_file(dirname(__DIR__, 4) . '/etc/config.xml');
+        $keys = [];
+        foreach ($config->default->inkthread_decoration->pricing->children() as $value) {
+            $keys[] = array_keys(json_decode((string)$value, true, 512, JSON_THROW_ON_ERROR));
+        }
+
+        $this->assertCount(2, $keys);
+        $this->assertSame([], array_intersect($keys[0], $keys[1]));
+    }
+
     public function testMissingConfigGivesNoTiers(): void
     {
         $this->scopeConfig->method('getValue')->willReturn(null);
